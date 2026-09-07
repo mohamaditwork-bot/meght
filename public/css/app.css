@@ -1,16 +1,21 @@
-/* MAYSAN INT. GROUP — HR Intelligence Platform design system */
+/* MAYSAN INT. GROUP — HR Intelligence Platform design system
+   Executive / formal treatment: restrained brand palette (deep teal + one
+   green accent), quiet neutrals with a slight teal bias, generous whitespace,
+   hairline borders, minimal shadow. Semantic colour (ok/warn/danger) is used
+   only to signal status, never for decoration. */
 :root{
-  --teal-900:#0a3f42; --teal-800:#0d5152; --teal-700:#0e5a5a; --teal-600:#12726e;
-  --green-700:#15803d; --green-600:#16a34a; --green-500:#1fae4a; --green-400:#34c759;
-  --brand-grad:linear-gradient(135deg,#0a3f42 0%,#0e5a5a 45%,#16a34a 100%);
-  --brand-grad-soft:linear-gradient(135deg,#0e5a5a 0%,#1f9d55 100%);
-  --bg:#eef1f4; --panel:#ffffff; --panel-2:#f8fafb;
-  --ink:#0f1e2b; --ink-2:#334155; --muted:#6b7a8d; --line:#e4e9ee; --line-2:#eef2f5;
-  --ok:#16a34a; --warn:#e0a400; --danger:#dc2626; --watch:#2563eb; --info:#0891b2;
-  --shadow-sm:0 1px 2px rgba(16,30,43,.06),0 1px 3px rgba(16,30,43,.08);
-  --shadow:0 4px 14px rgba(16,30,43,.08); --shadow-lg:0 12px 40px rgba(16,30,43,.14);
-  --radius:16px; --radius-sm:11px; --sidebar-w:262px; --topbar-h:64px;
-  --font:'Cairo','Tajawal','Segoe UI',system-ui,-apple-system,sans-serif;
+  --teal-900:#0a3438; --teal-800:#0c474a; --teal-700:#0e5a5a; --teal-600:#127a72;
+  --green-700:#15803d; --green-600:#1a8c46; --green-500:#1f9d4d; --green-400:#2ebd63;
+  --brand-grad:linear-gradient(160deg,#0a3438 0%,#0d4d4f 100%);
+  --brand-grad-soft:linear-gradient(135deg,#0e5a5a 0%,#1a8c46 100%);
+  --bg:#f1f4f5; --panel:#ffffff; --panel-2:#f6f9f9;
+  --ink:#12262b; --ink-2:#3c4d54; --muted:#6a7c82; --line:#e7edee; --line-2:#eef3f3;
+  --accent:#0e5a5a;
+  --ok:#1a8c46; --warn:#b7791f; --danger:#c0392b; --watch:#2563eb; --info:#0f766e;
+  --shadow-sm:0 1px 2px rgba(12,38,43,.04);
+  --shadow:0 2px 10px rgba(12,38,43,.06); --shadow-lg:0 16px 44px rgba(12,38,43,.16);
+  --radius:12px; --radius-sm:9px; --sidebar-w:256px; --topbar-h:62px;
+  --font:'IBM Plex Sans Arabic','Tajawal','Segoe UI',system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -21,6 +26,9 @@ button{font-family:inherit;cursor:pointer}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px;border:2px solid transparent;background-clip:content-box}
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8;background-clip:content-box}
 .hide{display:none!important}
+/* inline line-icons */
+.ic{width:16px;height:16px;flex:none;vertical-align:-3px}
+.btn .ic,.chip-btn .ic,.period-chip .ic{width:15px;height:15px}
 
 /* ---------- Login ---------- */
 .login-wrap{position:fixed;inset:0;display:grid;place-items:center;background:
@@ -52,7 +60,8 @@ button{font-family:inherit;cursor:pointer}
 .nav-group{margin-top:14px}
 .nav-group-t{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;opacity:.6;padding:6px 12px;font-weight:700}
 .nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;color:#dff1ec;font-size:13.5px;font-weight:600;transition:.15s;margin-bottom:2px}
-.nav-item .ico{width:18px;height:18px;flex:none;opacity:.92}
+.nav-item .ico{width:18px;height:18px;flex:none;opacity:.9;display:grid;place-items:center}
+.nav-item .ico .ic{width:17px;height:17px}
 .nav-item:hover{background:rgba(255,255,255,.1)}
 .nav-item.active{background:rgba(255,255,255,.17);color:#fff;box-shadow:inset 3px 0 0 #34c759}
 .nav-item .badge{margin-inline-start:auto;background:rgba(255,255,255,.22);border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700}
@@ -113,23 +122,23 @@ button{font-family:inherit;cursor:pointer}
 .btn-primary:hover{filter:brightness(1.06);color:#fff}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
 
-/* KPI grid */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:.2s}
-.kpi:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
-.kpi::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--brand-grad-soft)}
-.kpi .k-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.kpi .k-label{font-size:12px;color:var(--muted);font-weight:700}
-.kpi .k-ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(18,114,110,.1);color:var(--teal-700)}
-.kpi .k-val{font-size:29px;font-weight:800;color:var(--ink);margin-top:8px;letter-spacing:-.5px;line-height:1}
-.kpi .k-sub{font-size:11.5px;color:var(--muted);margin-top:6px;display:flex;gap:6px;align-items:center}
-.kpi .k-delta{font-weight:800;font-size:11.5px}
+/* KPI grid — uniform, quiet tiles. Colour is reserved for status, not decoration. */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:17px 18px;position:relative;box-shadow:var(--shadow-sm);transition:border-color .15s,box-shadow .15s}
+.kpi:hover{box-shadow:var(--shadow);border-color:#d7e0e0}
+.kpi .k-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.kpi .k-label{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.2px;line-height:1.4}
+.kpi .k-ico{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--panel-2);color:var(--teal-700);border:1px solid var(--line);flex:none}
+.kpi .k-ico .ic{width:16px;height:16px}
+.kpi .k-val{font-size:27px;font-weight:700;color:var(--ink);margin-top:12px;letter-spacing:-.4px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .k-val .cur{font-size:13px;font-weight:600;color:var(--muted)}
+.kpi .k-sub{font-size:11.5px;color:var(--muted);margin-top:7px;display:flex;gap:6px;align-items:center}
+.kpi .k-delta{font-weight:700;font-size:11.5px}
 .kpi .up{color:var(--ok)} .kpi .down{color:var(--danger)}
-.kpi.accent-green::before{background:linear-gradient(180deg,#22c55e,#15803d)}
-.kpi.accent-teal::before{background:linear-gradient(180deg,#12726e,#0a3f42)}
-.kpi.accent-amber::before{background:linear-gradient(180deg,#f59e0b,#b45309)}
-.kpi.accent-red::before{background:linear-gradient(180deg,#ef4444,#b91c1c)}
-.kpi.accent-blue::before{background:linear-gradient(180deg,#3b82f6,#1d4ed8)}
+/* Semantic accents only: alert tiles get a quiet status tint on the icon. */
+.kpi.accent-red .k-ico{color:var(--danger);background:rgba(192,57,43,.07);border-color:rgba(192,57,43,.18)}
+.kpi.accent-amber .k-ico{color:var(--warn);background:rgba(183,121,31,.08);border-color:rgba(183,121,31,.18)}
+.kpi.accent-green .k-ico{color:var(--green-700)}
 
 /* Panels & grid */
 .grid{display:grid;gap:16px}

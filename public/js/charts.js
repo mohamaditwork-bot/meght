@@ -4,9 +4,10 @@
     teal: '#0e5a5a', tealD: '#0a3f42', green: '#16a34a', greenL: '#34c759',
     amber: '#e0a400', red: '#dc2626', blue: '#2563eb', ink: '#0f1e2b', muted: '#6b7a8d', line: '#e4e9ee',
   };
-  // Categorical palette — distinct, on-brand, colour-blind aware ordering.
-  const CATS = ['#0e5a5a', '#16a34a', '#2563eb', '#e0a400', '#0891b2', '#7c3aed', '#dc2626',
-    '#0d9488', '#65a30d', '#db2777', '#475569', '#f59e0b', '#059669', '#4f46e5'];
+  // Categorical palette — restrained, brand-led (teals + greens + muted neutrals),
+  // no decorative rainbow; reads calm and formal.
+  const CATS = ['#0e5a5a', '#1a8c46', '#127a72', '#2ebd63', '#3c6e6e', '#8bbf9f',
+    '#0a3438', '#b7791f', '#5b8a8a', '#6a9c86', '#94a3a8', '#144e4e', '#a7c9b6', '#0c474a'];
   const FONT = "'Cairo','Tajawal',sans-serif";
   const registry = new Map();
 

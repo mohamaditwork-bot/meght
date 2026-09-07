@@ -15,6 +15,7 @@ let bodyMarkup = idx.substring(idx.indexOf('<body>') + 6, idx.indexOf('</body>')
 bodyMarkup = bodyMarkup.replace(/<script[\s\S]*?<\/script>/g, '').trim();
 
 let shim = read('web/shim.bundle.js');
+let icons = read('public/js/icons.js');
 let charts = read('public/js/charts.js');
 let pages = read('public/js/pages.js');
 let app = read('web/app.standalone.js');
@@ -28,7 +29,7 @@ pages = swap(pages); charts = swap(charts); app = swap(app); shim = swap(shim);
 const html = `<title>MAYSAN HR Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 ${css}
 /* standalone: show a small demo ribbon */
@@ -40,6 +41,7 @@ ${bodyMarkup}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>${shim}</script>
+<script>${icons}</script>
 <script>${charts}</script>
 <script>${pages}</script>
 <script>${app}</script>
