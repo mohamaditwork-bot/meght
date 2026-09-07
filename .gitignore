@@ -7,3 +7,4 @@ data/uploads/
 .DS_Store
 *.tmp
 .netlify/
+web/shim.bundle.js
