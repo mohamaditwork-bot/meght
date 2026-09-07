@@ -2,7 +2,10 @@
 // the standalone hosted demo. Replicates the server's REST routes over the
 // embedded snapshots. (Login here is a client-side demo gate; the full app uses
 // a hashed server passcode.)
-import { SNAPSHOTS, META } from './embed-data.js';
+import { SNAPSHOTS as SEED_SNAPSHOTS, META as SEED_META } from './embed-data.js';
+import { proposeMapping } from '../src/mapping.js';
+import { buildRecords } from '../src/transform.js';
+import { validate } from '../src/validation.js';
 import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from '../src/analytics.js';
 import { compareSnapshots, movementSummary, buildTimeline } from '../src/movements.js';
 import { complianceMatrix, buildAlerts, missingDocuments, statusOf } from '../src/expiry.js';
@@ -10,6 +13,11 @@ import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } fr
 import { generateInsights, executiveSummary } from '../src/insights.js';
 import { daysUntil } from '../src/util.js';
 import { EXPIRY_FIELDS } from '../src/schema.js';
+
+// Mutable in-memory store (seeded from the embedded data). Uploads add snapshots
+// here so the user can update the data entirely in the browser.
+const SNAPSHOTS = Object.assign({}, SEED_SNAPSHOTS);
+const META = { snapshots: SEED_META.snapshots.slice(), activeSnapshotId: SEED_META.activeSnapshotId };
 
 // Inlined from dataset.js (pure — avoids pulling Node-only store.js into the bundle).
 function applyFilters(records, q = {}) {
@@ -45,7 +53,7 @@ const ADMIN = {
 };
 let session = { user: null };
 let RULES = [];
-const ordered = () => META.snapshots.slice(); // Aug, Sep (chronological)
+const ordered = () => META.snapshots.slice().sort((a, b) => ((a.period || '') + (a.asOf || '')).localeCompare((b.period || '') + (b.asOf || ''))); // chronological
 const activeId = () => META.activeSnapshotId;
 
 function resolve(period) {
@@ -200,3 +208,40 @@ export async function clientApi(path, opts = {}) {
 }
 
 window.clientApi = clientApi;
+
+// ---- Client-side upload engine (runs the whole parser/validator in-browser) ----
+function detectPeriod(fileName) {
+  const months = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12, january: 1, february: 2, march: 3, april: 4, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+  const arMonths = { يناير: 1, فبراير: 2, مارس: 3, ابريل: 4, أبريل: 4, مايو: 5, يونيو: 6, يوليو: 7, اغسطس: 8, أغسطس: 8, سبتمبر: 9, اكتوبر: 10, أكتوبر: 10, نوفمبر: 11, ديسمبر: 12 };
+  const name = String(fileName || '').toLowerCase();
+  let year = null, month = null, confident = false;
+  let m = name.match(/(20\d{2})[-_ ]?(0[1-9]|1[0-2])/) || name.match(/(0[1-9]|1[0-2])[-_ ](20\d{2})/);
+  if (m) { if (m[1].length === 4) { year = +m[1]; month = +m[2]; } else { month = +m[1]; year = +m[2]; } confident = true; }
+  if (!confident) { const y = name.match(/20\d{2}/); if (y) year = +y[0]; for (const [k, v] of Object.entries(months)) if (name.includes(k)) { month = v; break; } for (const [k, v] of Object.entries(arMonths)) if (String(fileName).includes(k)) { month = v; break; } if (year && month) confident = true; }
+  const now = new Date();
+  if (!year) year = now.getFullYear(); if (!month) month = now.getMonth() + 1;
+  const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const value = `${year}-${String(month).padStart(2, '0')}`;
+  return { value, label: `${monthNames[month - 1]} ${year}`, year, month, confident, asOf: `${value}-01` };
+}
+
+function addSnapshot({ id, period, periodLabel, asOf, fileName }, records, dynamicFields, validation) {
+  const k = computeKPIs(records, asOf);
+  SNAPSHOTS[id] = { records, asOf, quality: validation.quality, meta: { id, period, periodLabel, asOf, fileName, uploadedAt: new Date().toISOString(), uploadedBy: 'admin', employeeCount: records.length, saudiPct: k.saudi_pct, payroll: k.total_payroll, qualityScore: validation.quality.score } };
+  // replace an existing snapshot with the same period, else append
+  const existing = META.snapshots.findIndex((s) => s.period === period);
+  const metaEntry = SNAPSHOTS[id].meta;
+  if (existing >= 0) { delete SNAPSHOTS[META.snapshots[existing].id]; META.snapshots[existing] = metaEntry; }
+  else META.snapshots.push(metaEntry);
+  META.activeSnapshotId = id;
+  return metaEntry;
+}
+
+// Exposed so the standalone upload UI can parse/validate/commit fully in-browser.
+window.HR = {
+  proposeMapping, buildRecords, validate, computeKPIs, filterOptions,
+  detectPeriod, addSnapshot,
+  setActive(id) { if (SNAPSHOTS[id]) { META.activeSnapshotId = id; return true; } return false; },
+  resetToSeed() { for (const k of Object.keys(SNAPSHOTS)) delete SNAPSHOTS[k]; Object.assign(SNAPSHOTS, SEED_SNAPSHOTS); META.snapshots = SEED_META.snapshots.slice(); META.activeSnapshotId = SEED_META.activeSnapshotId; },
+  uuid() { return (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 's' + Date.now() + Math.random().toString(16).slice(2); },
+};

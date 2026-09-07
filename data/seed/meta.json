@@ -1,35 +1,20 @@
 {
   "snapshots": [
     {
-      "id": "c5bd976c-9978-4e87-86e5-81fc14670d1e",
-      "period": "2026-08",
-      "periodLabel": "أغسطس 2026",
-      "asOf": "2026-08-01",
-      "fileName": "HR_Employees_2026-08.xlsx",
-      "uploadedAt": "2026-09-07T10:05:00.229Z",
-      "committedAt": "2026-09-07T10:05:00.471Z",
-      "uploadedBy": "admin",
-      "employeeCount": 104,
-      "saudiPct": 39.42307692307692,
-      "payroll": 774349,
-      "qualityScore": 95.7,
-      "status": "committed"
-    },
-    {
-      "id": "71a37a9c-bad9-4ad8-988e-df19c04a2b5b",
+      "id": "d9bc2a76-c0df-41e8-8670-d1343ed1c77d",
       "period": "2026-09",
       "periodLabel": "سبتمبر 2026",
       "asOf": "2026-09-01",
-      "fileName": "HR_Employees_2026-09.xlsx",
-      "uploadedAt": "2026-09-07T10:05:00.554Z",
-      "committedAt": "2026-09-07T10:05:00.748Z",
+      "fileName": "HR_Employees.xlsx",
+      "uploadedAt": "2026-09-07T11:23:44.136Z",
+      "committedAt": "2026-09-07T11:23:44.136Z",
       "uploadedBy": "admin",
       "employeeCount": 104,
       "saudiPct": 37.5,
-      "payroll": 763273,
-      "qualityScore": 95.7,
+      "payroll": 428521.2,
+      "qualityScore": 92,
       "status": "committed"
     }
   ],
-  "activeSnapshotId": "71a37a9c-bad9-4ad8-988e-df19c04a2b5b"
+  "activeSnapshotId": "d9bc2a76-c0df-41e8-8670-d1343ed1c77d"
 }

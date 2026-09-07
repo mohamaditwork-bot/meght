@@ -6,7 +6,8 @@ import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { readWorkbook, proposeMapping } from './src/mapping.js';
+import { readWorkbook } from './src/workbook.js';
+import { proposeMapping } from './src/mapping.js';
 import { buildRecords } from './src/transform.js';
 import { validate } from './src/validation.js';
 import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from './src/analytics.js';

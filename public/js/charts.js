@@ -1,14 +1,14 @@
 /* charts.js — ECharts brand theme + reusable chart builders. */
 (function () {
   const BRAND = {
-    teal: '#0e5a5a', tealD: '#0a3f42', green: '#16a34a', greenL: '#34c759',
+    teal: '#0B4D2E', tealD: '#0B4D2E', green: '#1E883F', greenL: '#3CC963',
     amber: '#e0a400', red: '#dc2626', blue: '#2563eb', ink: '#0f1e2b', muted: '#6b7a8d', line: '#e4e9ee',
   };
-  // Categorical palette — restrained, brand-led (teals + greens + muted neutrals),
-  // no decorative rainbow; reads calm and formal.
-  const CATS = ['#0e5a5a', '#1a8c46', '#127a72', '#2ebd63', '#3c6e6e', '#8bbf9f',
-    '#0a3438', '#b7791f', '#5b8a8a', '#6a9c86', '#94a3a8', '#144e4e', '#a7c9b6', '#0c474a'];
-  const FONT = "'Cairo','Tajawal',sans-serif";
+  // Categorical palette — MAYSAN green identity led, with gold + a couple muted
+  // accents for separation; calm and formal, not a rainbow.
+  const CATS = ['#0B4D2E', '#1E883F', '#27A84E', '#3CC963', '#156835', '#C49A3A',
+    '#7A9B84', '#1A6EA3', '#6DBE86', '#4A6B55', '#A9D8B8', '#0B4D2E', '#8FB8A0', '#D4820F'];
+  const FONT = "'Tajawal','Inter',sans-serif";
   const registry = new Map();
 
   function baseTextStyle() { return { fontFamily: FONT, color: BRAND.ink }; }
@@ -66,7 +66,7 @@
       yAxis: { type: 'category', data: cats, inverse: true, axisLabel: { color: BRAND.ink, fontFamily: FONT, fontSize: 11.5, width: opts.labelWidth || 120, overflow: 'truncate' }, axisTick: { show: false }, axisLine: { show: false } },
       series: [{
         type: 'bar', data: values, barMaxWidth: 22, barCategoryGap: '35%',
-        itemStyle: { borderRadius: [0, 6, 6, 0], color: opts.color || new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0e5a5a' }, { offset: 1, color: '#1fae4a' }]) },
+        itemStyle: { borderRadius: [0, 6, 6, 0], color: opts.color || new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0B4D2E' }, { offset: 1, color: '#27A84E' }]) },
         label: opts.showLabel ? { show: true, position: 'right', formatter: (p) => fmtN(p.value) + (opts.suffix || ''), fontFamily: FONT, color: BRAND.ink_2 || BRAND.muted, fontWeight: 700, fontSize: 11 } : { show: false },
       }],
     });
@@ -80,7 +80,7 @@
       tooltip: tooltip({ trigger: 'axis', axisPointer: { type: 'shadow' } }),
       xAxis: { type: 'category', data: cats, axisLabel: { color: BRAND.ink, fontFamily: FONT, fontSize: 11, interval: 0, rotate: opts.rotate || 0 }, axisTick: { show: false } },
       yAxis: { type: 'value', axisLabel: { color: BRAND.muted, fontFamily: FONT }, splitLine: { lineStyle: { color: BRAND.line } } },
-      series: [{ type: 'bar', data: values, barMaxWidth: 34, itemStyle: { borderRadius: [6, 6, 0, 0], color: opts.color || new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#1fae4a' }, { offset: 1, color: '#0e5a5a' }]) } }],
+      series: [{ type: 'bar', data: values, barMaxWidth: 34, itemStyle: { borderRadius: [6, 6, 0, 0], color: opts.color || new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#27A84E' }, { offset: 1, color: '#0B4D2E' }]) } }],
     });
   }
 
@@ -148,9 +148,9 @@
       yAxis: { type: 'value', axisLabel: { color: BRAND.muted, fontFamily: FONT }, splitLine: { lineStyle: { color: BRAND.line } } },
       series: [
         { type: 'bar', stack: 'w', itemStyle: { color: 'transparent' }, data: base },
-        { type: 'bar', stack: 'w', data: up, itemStyle: { color: '#16a34a', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 34, label: { show: true, position: 'top', formatter: (p) => p.value === '-' ? '' : '+' + fmtN(p.value), fontFamily: FONT, fontSize: 10, color: '#15803d', fontWeight: 700 } },
+        { type: 'bar', stack: 'w', data: up, itemStyle: { color: '#1E883F', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 34, label: { show: true, position: 'top', formatter: (p) => p.value === '-' ? '' : '+' + fmtN(p.value), fontFamily: FONT, fontSize: 10, color: '#156835', fontWeight: 700 } },
         { type: 'bar', stack: 'w', data: down, itemStyle: { color: '#dc2626', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 34, label: { show: true, position: 'top', formatter: (p) => p.value === '-' ? '' : '−' + fmtN(p.value), fontFamily: FONT, fontSize: 10, color: '#b91c1c', fontWeight: 700 } },
-        { type: 'bar', stack: 'w', data: tot, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0e5a5a' }, { offset: 1, color: '#0a3f42' }]), borderRadius: [4, 4, 0, 0] }, barMaxWidth: 34, label: { show: true, position: 'top', formatter: (p) => p.value === '-' ? '' : fmtN(p.value), fontFamily: FONT, fontSize: 11, color: BRAND.ink, fontWeight: 800 } },
+        { type: 'bar', stack: 'w', data: tot, itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0B4D2E' }, { offset: 1, color: '#0B4D2E' }]), borderRadius: [4, 4, 0, 0] }, barMaxWidth: 34, label: { show: true, position: 'top', formatter: (p) => p.value === '-' ? '' : fmtN(p.value), fontFamily: FONT, fontSize: 11, color: BRAND.ink, fontWeight: 800 } },
       ],
     });
   }
@@ -164,14 +164,14 @@
       grid: { left: 8, right: 14, top: 10, bottom: 60, containLabel: true },
       xAxis: { type: 'category', data: cols, splitArea: { show: true }, axisLabel: { color: BRAND.ink, fontFamily: FONT, fontSize: 10, rotate: 40, interval: 0 } },
       yAxis: { type: 'category', data: rows, splitArea: { show: true }, axisLabel: { color: BRAND.ink, fontFamily: FONT, fontSize: 10.5, width: 90, overflow: 'truncate' } },
-      visualMap: { min: 0, max, calculable: true, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: ['#eef7f2', '#7fd0a1', '#16a34a', '#0a3f42'] }, textStyle: { fontFamily: FONT, color: BRAND.muted } },
+      visualMap: { min: 0, max, calculable: true, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: ['#eef7f2', '#7fd0a1', '#1E883F', '#0B4D2E'] }, textStyle: { fontFamily: FONT, color: BRAND.muted } },
       series: [{ type: 'heatmap', data, label: { show: opts.showLabel !== false, fontFamily: FONT, fontSize: 10, color: '#0f1e2b' }, itemStyle: { borderColor: '#fff', borderWidth: 1 }, emphasis: { itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,.25)' } } }],
     });
   }
 
   // Gauge / progress ring
   function gauge(el, value, opts = {}) {
-    const color = opts.color || (value >= (opts.target || 100) ? '#16a34a' : value >= 50 ? '#e0a400' : '#dc2626');
+    const color = opts.color || (value >= (opts.target || 100) ? '#1E883F' : value >= 50 ? '#e0a400' : '#dc2626');
     return render(el, {
       series: [{
         type: 'gauge', startAngle: 220, endAngle: -40, min: 0, max: 100, radius: '96%', center: ['50%', '56%'],

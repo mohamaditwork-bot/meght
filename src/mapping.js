@@ -2,38 +2,10 @@
 // Matches columns by NAME + DATA TYPE, never by position. Unconfirmed matches
 // are surfaced (never auto-applied). Unknown columns become dynamic fields.
 
-import XLSX from 'xlsx';
 import { CORE_FIELDS, FIELD_TYPES, normHeader } from './schema.js';
 import { similarity, parseNumber, parseDate } from './util.js';
 
 const CONFIDENCE = { CONFIRMED: 0.99, HIGH: 0.86, REVIEW: 0.62 };
-
-// Read a workbook buffer -> { headers, rows(objects keyed by header), sheetName }
-export function readWorkbook(buffer) {
-  const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
-  const sheetName = wb.SheetNames[0];
-  const ws = wb.Sheets[sheetName];
-  if (!ws) throw new Error('لا يحتوي الملف على أي ورقة عمل صالحة.');
-  // Header row detection: find the row with the most non-empty string cells
-  const grid = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-  let headerRow = 0, best = -1;
-  for (let i = 0; i < Math.min(grid.length, 15); i++) {
-    const cells = grid[i] || [];
-    const score = cells.filter((c) => typeof c === 'string' && c.trim().length > 0).length;
-    if (score > best) { best = score; headerRow = i; }
-  }
-  const headers = (grid[headerRow] || []).map((h, i) =>
-    (h === null || h === undefined || String(h).trim() === '') ? `Column ${i + 1}` : String(h).trim());
-  const rows = [];
-  for (let r = headerRow + 1; r < grid.length; r++) {
-    const arr = grid[r] || [];
-    if (arr.every((c) => c === null || c === undefined || String(c).trim() === '')) continue;
-    const obj = {};
-    headers.forEach((h, i) => { obj[h] = arr[i] === undefined ? null : arr[i]; });
-    rows.push(obj);
-  }
-  return { headers, rows, sheetName };
-}
 
 // Infer the dominant data type of a column from sample values.
 export function inferType(values) {

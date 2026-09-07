@@ -4,18 +4,20 @@
    hairline borders, minimal shadow. Semantic colour (ok/warn/danger) is used
    only to signal status, never for decoration. */
 :root{
-  --teal-900:#0a3438; --teal-800:#0c474a; --teal-700:#0e5a5a; --teal-600:#127a72;
-  --green-700:#15803d; --green-600:#1a8c46; --green-500:#1f9d4d; --green-400:#2ebd63;
-  --brand-grad:linear-gradient(160deg,#0a3438 0%,#0d4d4f 100%);
-  --brand-grad-soft:linear-gradient(135deg,#0e5a5a 0%,#1a8c46 100%);
-  --bg:#f1f4f5; --panel:#ffffff; --panel-2:#f6f9f9;
-  --ink:#12262b; --ink-2:#3c4d54; --muted:#6a7c82; --line:#e7edee; --line-2:#eef3f3;
-  --accent:#0e5a5a;
-  --ok:#1a8c46; --warn:#b7791f; --danger:#c0392b; --watch:#2563eb; --info:#0f766e;
-  --shadow-sm:0 1px 2px rgba(12,38,43,.04);
-  --shadow:0 2px 10px rgba(12,38,43,.06); --shadow-lg:0 16px 44px rgba(12,38,43,.16);
-  --radius:12px; --radius-sm:9px; --sidebar-w:256px; --topbar-h:62px;
-  --font:'IBM Plex Sans Arabic','Tajawal','Segoe UI',system-ui,-apple-system,sans-serif;
+  /* MAYSAN green identity: deep forest -> bright green, light-green ground, gold accent. */
+  --teal-900:#0B4D2E; --teal-800:#156835; --teal-700:#1E883F; --teal-600:#27A84E;
+  --green-700:#156835; --green-600:#1E883F; --green-500:#27A84E; --green-400:#3CC963;
+  --gold:#C49A3A;
+  --brand-grad:linear-gradient(165deg,#0B4D2E 0%,#156835 100%);
+  --brand-grad-soft:linear-gradient(135deg,#156835 0%,#27A84E 100%);
+  --bg:#F3FAF5; --panel:#ffffff; --panel-2:#EAF7EE;
+  --ink:#081C0F; --ink-2:#1F3D28; --muted:#4A6B55; --line:#C8E4D2; --line-2:#EAF7EE;
+  --accent:#1E883F;
+  --ok:#1E883F; --warn:#D4820F; --danger:#C0392B; --watch:#1A6EA3; --info:#156835;
+  --shadow-sm:0 1px 3px rgba(8,28,15,.05);
+  --shadow:0 1px 4px rgba(8,28,15,.07),0 4px 16px rgba(8,28,15,.05); --shadow-lg:0 16px 44px rgba(8,28,15,.16);
+  --radius:10px; --radius-sm:8px; --sidebar-w:248px; --topbar-h:60px;
+  --font:'Tajawal','Inter','Segoe UI',system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
