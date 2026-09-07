@@ -1,0 +1,25 @@
+# Netlify deployment config for the HR Intelligence Platform.
+# Static frontend is served from public/; all /api/* calls run in a serverless
+# function that hosts the Express app.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "echo 'no build step'"
+
+[functions]
+  node_bundler = "esbuild"
+  # Ship the demo seed so dashboards/movements show data on the live link.
+  included_files = ["data/seed/**", "public/index.html"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+# SPA fallback (the app uses hash routing, so this only covers deep links).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

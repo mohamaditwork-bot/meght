@@ -7,11 +7,33 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..', 'data');
+// Data dir is configurable so the app can run on a writable path in serverless
+// environments (e.g. Netlify functions -> /tmp). Defaults to ./data locally.
+const ROOT = process.env.HR_DATA_DIR || path.join(__dirname, '..', 'data');
+const SEED_DIR = path.join(__dirname, '..', 'data', 'seed');
 const SNAP_DIR = path.join(ROOT, 'snapshots');
 const UP_DIR = path.join(ROOT, 'uploads');
 
-for (const d of [ROOT, SNAP_DIR, UP_DIR]) fs.mkdirSync(d, { recursive: true });
+for (const d of [ROOT, SNAP_DIR, UP_DIR]) { try { fs.mkdirSync(d, { recursive: true }); } catch {} }
+
+// On first run in an ephemeral env, copy bundled demo seed so the platform
+// shows data immediately (dashboards/movements work out of the box).
+(function seedIfEmpty() {
+  try {
+    if (ROOT === SEED_DIR) return;
+    const metaPath = path.join(ROOT, 'meta.json');
+    if (fs.existsSync(metaPath)) return;
+    if (!fs.existsSync(SEED_DIR)) return;
+    for (const f of fs.readdirSync(SEED_DIR)) {
+      const src = path.join(SEED_DIR, f), dst = path.join(ROOT, f);
+      const st = fs.statSync(src);
+      if (st.isDirectory()) {
+        fs.mkdirSync(dst, { recursive: true });
+        for (const g of fs.readdirSync(src)) fs.copyFileSync(path.join(src, g), path.join(dst, g));
+      } else fs.copyFileSync(src, dst);
+    }
+  } catch {}
+})();
 
 function readJSON(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
