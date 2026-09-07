@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+  <title>MAYSAN INT. GROUP — منصة ذكاء الموارد البشرية</title>
+  <meta name="theme-color" content="#0e5a5a">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <!-- Charting & Excel libraries are vendored locally so the platform is fully
+       self-contained and works offline / behind restricted networks. -->
+  <script src="js/vendor/echarts.min.js" defer></script>
+  <script src="js/vendor/xlsx.full.min.js" defer></script>
+</head>
+<body>
+  <!-- Login -->
+  <div id="login" class="login-wrap hide">
+    <form class="login-card" id="loginForm" autocomplete="off">
+      <img src="assets/logo.svg" class="login-logo" alt="MAYSAN INT. GROUP">
+      <h1>منصة ذكاء الموارد البشرية</h1>
+      <p>HR Intelligence &amp; Workforce Analytics</p>
+      <div class="pass-field">
+        <input id="passcode" type="password" inputmode="numeric" maxlength="12" placeholder="• • • • • •" autocomplete="off" aria-label="رمز الدخول">
+      </div>
+      <button class="btn-login" type="submit" id="loginBtn">تسجيل الدخول</button>
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-foot">© <span id="yr"></span> MAYSAN INTERNATIONAL GROUP · جميع الحقوق محفوظة</div>
+    </form>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="app hide">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <img src="assets/logo.svg" alt="MG">
+        <div><div class="brand-name">MAYSAN INT. GROUP</div><div class="brand-sub">HR INTELLIGENCE</div></div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar-foot" id="sideFoot"></div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <div class="search-box">
+          <input id="globalSearch" type="text" placeholder="بحث عن موظف: الرقم الوظيفي، الاسم، القسم، المسمى…" autocomplete="off">
+          <span class="s-ico">🔍</span>
+          <div class="suggest hide" id="suggest"></div>
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="topbar-actions">
+          <button class="period-chip" id="periodChip">📅 <span id="periodLabel">—</span></button>
+          <span class="quality-chip hide" id="qualityChip">جودة: <span id="qualityVal">—</span></span>
+          <div class="dd">
+            <button class="user-chip" id="userBtn">
+              <span class="av" id="userAv">A</span>
+              <span><span class="u-name" id="userName">—</span><br><span class="u-role" id="userRole">—</span></span>
+            </button>
+            <div class="dd-menu hide" id="userMenu">
+              <button id="miPrint">🖨️ طباعة الصفحة الحالية</button>
+              <button id="miReport">📄 تقرير تنفيذي للطباعة</button>
+              <hr>
+              <div style="padding:6px 12px;font-size:11px;color:var(--muted)" id="miSession"></div>
+              <button id="miLogout" style="color:var(--danger)">🚪 تسجيل الخروج</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="filterbar no-print hide" id="filterbar"></div>
+      <div class="active-filters no-print" id="activeFilters"></div>
+
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+  <div id="modalRoot"></div>
+
+  <script src="js/charts.js" defer></script>
+  <script src="js/pages.js" defer></script>
+  <script src="js/upload.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>

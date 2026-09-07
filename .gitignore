@@ -1,0 +1,8 @@
+node_modules/
+npm-debug.log*
+# Runtime data (per-deployment); samples are kept for demo
+data/*.json
+data/snapshots/
+data/uploads/
+.DS_Store
+*.tmp
