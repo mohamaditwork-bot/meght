@@ -539,4 +539,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => console.log(`HR Intelligence platform running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log('');
+  console.log('  ✅ MAYSAN INT. GROUP — HR Intelligence Platform');
+  console.log(`  🌐  http://localhost:${PORT}`);
+  console.log(`  🔑  رمز الدخول الافتراضي: ${process.env.HR_ADMIN_PASSCODE || '056023'}`);
+  console.log('      (إن تعذّر الدخول، أوقف الخادم ونفّذ: npm run reset-login ثم npm start)');
+  console.log('');
+});

@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "seed": "node scripts/generate-sample.js"
+    "seed": "node scripts/generate-sample.js",
+    "reset-login": "node scripts/reset-login.js"
   },
   "engines": {
     "node": ">=18"
