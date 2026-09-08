@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/app.css">
+  <script>/* apply saved theme + language before first paint (no flash) */(function(){try{var t=localStorage.getItem('hr_theme')||'light';var l=localStorage.getItem('hr_lang')||'ar';document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('dir',l==='ar'?'rtl':'ltr');document.documentElement.setAttribute('lang',l);}catch(e){}})();</script>
   <!-- Charting & Excel libraries are vendored locally so the platform is fully
        self-contained and works offline / behind restricted networks. -->
   <script src="js/vendor/echarts.min.js" defer></script>
@@ -52,8 +53,10 @@
         </div>
         <div class="topbar-spacer"></div>
         <div class="topbar-actions">
+          <div class="tb-toggle" id="langToggle" title="Language / اللغة"><button data-lang="ar">ع</button><button data-lang="en">EN</button></div>
+          <div class="tb-toggle" id="themeToggle" title="Theme / المظهر"><button data-theme-btn="light">☀</button><button data-theme-btn="dark">☾</button></div>
           <button class="period-chip" id="periodChip"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <span id="periodLabel">—</span></button>
-          <span class="quality-chip hide" id="qualityChip">جودة: <span id="qualityVal">—</span></span>
+          <span class="quality-chip hide" id="qualityChip"><span id="qualityLbl">جودة</span>: <span id="qualityVal">—</span></span>
           <div class="dd">
             <button class="user-chip" id="userBtn">
               <span class="av" id="userAv">A</span>
@@ -80,9 +83,12 @@
   <div class="toast-wrap" id="toasts"></div>
   <div id="modalRoot"></div>
 
+  <script src="js/vendor/paged.min.js" defer></script>
+  <script src="js/i18n.js" defer></script>
   <script src="js/icons.js" defer></script>
   <script src="js/charts.js" defer></script>
   <script src="js/pages.js" defer></script>
+  <script src="js/report.js" defer></script>
   <script src="js/upload.js" defer></script>
   <script src="js/app.js" defer></script>
 </body>

@@ -1,13 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" role="img" aria-label="MAYSAN INT. GROUP">
-  <!-- Monochrome white version for dark backgrounds (sidebar/login gradient) -->
-  <g font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="300" text-anchor="middle" fill="#ffffff">
-    <text x="238" y="232">M</text>
-    <text x="430" y="232">G</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300" role="img" aria-label="MAYSAN INT. GROUP">
+  <!-- Monochrome white version for dark backgrounds (sidebar / login gradient) -->
+  <g font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="330" text-anchor="middle" fill="#ffffff">
+    <text x="205" y="240">M</text>
+    <text x="470" y="240" fill="#eafff4">G</text>
   </g>
-  <g font-family="'Cairo','Segoe UI',Arial,sans-serif" font-weight="800" font-size="30" letter-spacing="7" text-anchor="middle" fill="#0a3f42">
-    <rect x="24" y="128" width="592" height="46" rx="6" fill="#ffffff" opacity="0.16"/>
-    <text x="188" y="162" fill="#eafff4">MAYSAN</text>
-    <text x="330" y="162" fill="#cdeede">INT.</text>
-    <text x="452" y="162" fill="#a7f3c8">GROUP</text>
+  <g font-family="'Tajawal','Segoe UI',Arial,sans-serif" font-weight="800" font-size="33" letter-spacing="7" text-anchor="middle">
+    <text x="200" y="150" fill="#ffffff">MAYSAN</text>
+    <text x="356" y="150" fill="#cdeede">INT.</text>
+    <text x="486" y="150" fill="#a7f3c8">GROUP</text>
   </g>
 </svg>

@@ -58,36 +58,36 @@
 
  // ---------- Nav definition ----------
  const NAV = [
- { group: 'الرئيسية', items: [
- { id: 'dashboard', label: 'لوحة القيادة التنفيذية', perm: 'view_dashboard', ico: 'activity' },
- { id: 'insights', label: 'رؤى الذكاء الاصطناعي', perm: 'view_insights', ico: 'activity' },
+ { gkey: 'nav_overview', items: [
+ { id: 'dashboard', key: 'n_dashboard', perm: 'view_dashboard', ico: 'activity' },
+ { id: 'insights', key: 'n_insights', perm: 'view_insights', ico: 'activity' },
+ { id: 'reports', key: 'n_reports', perm: 'view_dashboard', ico: 'printer' },
  ]},
- { group: 'تحليلات القوى العاملة', items: [
- { id: 'workforce', label: 'تحليلات القوى العاملة', perm: 'view_workforce', ico: 'users' },
- { id: 'saudization', label: 'السعودة والتوطين', perm: 'view_saudization', ico: 'user-check' },
- { id: 'nationality', label: 'تحليلات الجنسيات', perm: 'view_nationality', ico: 'globe' },
- { id: 'departments', label: 'تحليلات الأقسام', perm: 'view_departments', ico: 'building' },
- { id: 'jobtitles', label: 'المسميات الوظيفية', perm: 'view_jobtitles', ico: 'briefcase' },
+ { gkey: 'nav_workforce', items: [
+ { id: 'workforce', key: 'n_workforce', perm: 'view_workforce', ico: 'users' },
+ { id: 'saudization', key: 'n_saudization', perm: 'view_saudization', ico: 'user-check' },
+ { id: 'nationality', key: 'n_nationality', perm: 'view_nationality', ico: 'globe' },
+ { id: 'departments', key: 'n_departments', perm: 'view_departments', ico: 'building' },
+ { id: 'jobtitles', key: 'n_jobtitles', perm: 'view_jobtitles', ico: 'briefcase' },
  ]},
- { group: 'الموظفون والحركات', items: [
- { id: 'employees', label: 'الموظفون والبحث', perm: 'view_employees', ico: 'search' },
- { id: 'movements', label: 'الترقيات والحركات', perm: 'view_movements', ico: 'trending-up' },
- { id: 'monthly', label: 'الحركة الشهرية', perm: 'view_movements', ico: 'repeat' },
- { id: 'compare', label: 'المقارنة الشهرية', perm: 'view_comparison', ico: 'scale' },
+ { gkey: 'nav_compliance', items: [
+ { id: 'employees', key: 'n_employees', perm: 'view_employees', ico: 'search' },
+ { id: 'movements', key: 'n_movements', perm: 'view_movements', ico: 'trending-up' },
+ { id: 'monthly', key: 'n_monthly', perm: 'view_movements', ico: 'repeat' },
+ { id: 'compare', key: 'n_compare', perm: 'view_comparison', ico: 'scale' },
+ { id: 'leave', key: 'n_leave', perm: 'view_leave', ico: 'sun' },
+ { id: 'salary', key: 'n_salary', perm: 'view_salary', ico: 'wallet' },
+ { id: 'expiry', key: 'n_expiry', perm: 'view_expiry', ico: 'clock' },
  ]},
- { group: 'الرصيد والامتثال', items: [
- { id: 'leave', label: 'الإجازات والأرصدة', perm: 'view_leave', ico: 'sun' },
- { id: 'salary', label: 'تحليلات الرواتب', perm: 'view_salary', ico: 'wallet' },
- { id: 'expiry', label: 'الانتهاء والامتثال', perm: 'view_expiry', ico: 'clock' },
- ]},
- { group: 'الإدارة والبيانات', items: [
- { id: 'rules', label: 'مركز قرارات التوطين', perm: 'view_saudization', ico: 'scale' },
- { id: 'upload', label: 'رفع بيانات Excel', perm: 'upload_data', ico: 'arrow-up' },
- { id: 'history', label: 'سجل رفع البيانات', perm: 'view_dashboard', ico: 'layers' },
- { id: 'audit', label: 'سجل التدقيق', perm: 'view_audit', ico: 'shield' },
- { id: 'users', label: 'المستخدمون والصلاحيات', perm: 'manage_users', ico: 'user' },
+ { gkey: 'nav_data', items: [
+ { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale' },
+ { id: 'upload', key: 'n_upload', perm: 'upload_data', ico: 'arrow-up' },
+ { id: 'history', key: 'n_uploads', perm: 'view_dashboard', ico: 'layers' },
+ { id: 'audit', key: 'n_audit', perm: 'view_audit', ico: 'shield' },
+ { id: 'users', key: 'n_users', perm: 'manage_users', ico: 'user' },
  ]},
  ];
+ const T = (k) => (window.I18N ? window.I18N.t(k) : k);
  function can(perm) { return App.me && App.me.permissions.includes(perm); }
  window.can = can;
 
@@ -97,15 +97,16 @@
  const items = g.items.filter((i) => can(i.perm));
  if (!items.length) return;
  const gEl = document.createElement('div'); gEl.className = 'nav-group';
- gEl.innerHTML = `<div class="nav-group-t">${g.group}</div>`;
+ gEl.innerHTML = `<div class="nav-group-t">${fmt.esc(T(g.gkey))}</div>`;
  items.forEach((i) => {
  const a = document.createElement('a');
  a.className = 'nav-item'; a.href = '#/' + i.id; a.dataset.route = i.id;
- a.innerHTML = `<span class="ico">${window.icon ? icon(i.ico) : ''}</span><span>${i.label}</span>`;
+ a.innerHTML = `<span class="ico">${window.icon ? icon(i.ico) : ''}</span><span>${fmt.esc(T(i.key))}</span>`;
  gEl.appendChild(a);
  });
  nav.appendChild(gEl);
  });
+ $$('.nav-item').forEach((a) => a.classList.toggle('active', a.dataset.route === App.currentRoute));
  }
 
  // ---------- Filters ----------
@@ -212,7 +213,8 @@
  $('#userMenu').addEventListener('click', (e) => e.stopPropagation());
  $('#miLogout').addEventListener('click', async () => { await api('/api/logout', { method: 'POST' }); location.reload(); });
  $('#miPrint').addEventListener('click', () => { $('#userMenu').classList.add('hide'); Pages.printCurrent(); });
- $('#miReport').addEventListener('click', () => { $('#userMenu').classList.add('hide'); location.hash = '#/dashboard'; setTimeout(() => Pages.printCurrent(), 400); });
+ $('#miReport').addEventListener('click', () => { $('#userMenu').classList.add('hide'); location.hash = '#/reports'; });
+ initLangTheme();
  $('#periodChip').addEventListener('click', () => openPeriodPicker());
  }
  function openPeriodPicker() {
@@ -269,6 +271,42 @@
  }
 
  window.addEventListener('hashchange', route);
+
+ // ---------- Language & Theme ----------
+ function applyChrome() {
+ const l = window.I18N.lang;
+ document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+ document.documentElement.setAttribute('lang', l);
+ document.documentElement.setAttribute('data-theme', window.I18N.theme);
+ // toggle button active states
+ $$('#langToggle button').forEach((b) => b.classList.toggle('on', b.dataset.lang === l));
+ $$('#themeToggle button').forEach((b) => b.classList.toggle('on', b.dataset.themeBtn === window.I18N.theme));
+ // static chrome text
+ const set = (sel, txt) => { const e = $(sel); if (e) e.textContent = txt; };
+ set('#qualityLbl', T('quality'));
+ const gs = $('#globalSearch'); if (gs) gs.placeholder = T('search_ph');
+ set('#miPrint', T('print_page')); set('#miReport', T('reports_center')); set('#miLogout', T('logout'));
+ // login + sidebar brand
+ set('.brand-sub', T('brand_sub'));
+ const lh = $('#login h1'); if (lh) lh.textContent = T('login_title');
+ const lp = $('#login p'); if (lp) lp.textContent = T('login_sub');
+ set('#loginBtn', T('login_btn'));
+ const pc = $('#passcode'); if (pc) pc.placeholder = T('passcode_ph');
+ }
+ function initLangTheme() {
+ $('#langToggle').addEventListener('click', (e) => {
+ const b = e.target.closest('button[data-lang]'); if (!b) return;
+ window.I18N.setLang(b.dataset.lang); applyChrome();
+ if (App.me) { renderNav(); renderFilters(); route(); }
+ });
+ $('#themeToggle').addEventListener('click', (e) => {
+ const b = e.target.closest('button[data-theme-btn]'); if (!b) return;
+ window.I18N.setTheme(b.dataset.themeBtn); applyChrome();
+ setTimeout(() => { if (window.Chart) Chart.resizeAll(); }, 50);
+ });
+ applyChrome();
+ }
+ App.applyChrome = applyChrome;
 
  // ---------- Init ----------
  async function start() {
