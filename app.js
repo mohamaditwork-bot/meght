@@ -498,12 +498,22 @@ app.post('/api/upload/:id/commit', requirePerm('approve_validation'), (req, res)
   const id = crypto.randomUUID();
   store.saveSnapshot(id, { records, dynamicFields, validation, asOf, mapping, normalizationMaps });
   const meta = store.getMeta();
-  meta.snapshots.push({
+  const entry = {
     id, period, periodLabel, asOf, fileName: p.fileName, uploadedAt: p.uploadedAt,
     committedAt: new Date().toISOString(), uploadedBy: p.uploadedBy,
     employeeCount: records.length, saudiPct: kpis.saudi_pct, payroll: kpis.total_payroll,
     qualityScore: validation.quality.score, status: 'committed',
-  });
+  };
+  // Update-not-duplicate: re-uploading a file for a period that already exists
+  // REPLACES that period's snapshot instead of creating a duplicate month.
+  const existingIdx = meta.snapshots.findIndex((s) => s.period === period);
+  if (existingIdx >= 0) {
+    const old = meta.snapshots[existingIdx];
+    if (old.id !== id) store.deleteSnapshot(old.id);
+    meta.snapshots[existingIdx] = entry;
+  } else {
+    meta.snapshots.push(entry);
+  }
   meta.activeSnapshotId = id;
   store.saveMeta(meta);
   delete pending[req.params.id]; store.savePending(pending);

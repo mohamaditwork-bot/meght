@@ -69,6 +69,7 @@
  { id: 'nationality', key: 'n_nationality', perm: 'view_nationality', ico: 'globe' },
  { id: 'departments', key: 'n_departments', perm: 'view_departments', ico: 'building' },
  { id: 'jobtitles', key: 'n_jobtitles', perm: 'view_jobtitles', ico: 'briefcase' },
+ { id: 'hotels', key: 'n_hotels', perm: 'view_workforce', ico: 'building' },
  ]},
  { gkey: 'nav_compliance', items: [
  { id: 'employees', key: 'n_employees', perm: 'view_employees', ico: 'search' },
@@ -110,44 +111,45 @@
  }
 
  // ---------- Filters ----------
- const FILTER_PAGES = new Set(['dashboard', 'workforce', 'saudization', 'nationality', 'departments', 'jobtitles', 'leave', 'salary', 'expiry', 'insights']);
+ const FILTER_PAGES = new Set(['dashboard', 'workforce', 'saudization', 'nationality', 'departments', 'jobtitles', 'hotels', 'leave', 'salary', 'expiry', 'insights']);
  function renderFilters() {
  const bar = $('#filterbar');
  if (!App.state || !App.state.hasData || !FILTER_PAGES.has(App.currentRoute)) { bar.classList.add('hide'); renderActiveFilters(); return; }
  bar.classList.remove('hide');
  const o = App.state.options || {};
  const snaps = App.state.snapshots || [];
+ const A_ALL = T('f_all');
  const sel = (key, label, list, valMap) => {
- const opts = ['<option value="">الكل</option>'].concat((list || []).map((v) => {
+ const opts = [`<option value="">${A_ALL}</option>`].concat((list || []).map((v) => {
  const val = valMap ? v.id : v; const txt = valMap ? v.label : v;
  return `<option value="${fmt.esc(val)}" ${App.filters[key] === String(val) ? 'selected' : ''}>${fmt.esc(txt)}</option>`;
  })).join('');
- return `<div class="fl"><label>${label}</label><select data-filter="${key}">${opts}</select></div>`;
+ return `<div class="fl"><label>${fmt.esc(label)}</label><select data-filter="${key}">${opts}</select></div>`;
  };
  bar.innerHTML =
- sel('period', 'الفترة', snaps.map((s) => ({ id: s.id, label: s.periodLabel || s.period })), true) +
- sel('division', 'المنشأة', o.division) +
- sel('department', 'القسم', o.department) +
- sel('position', 'المسمى', o.position) +
- sel('nationality', 'الجنسية', o.nationality) +
- sel('level', 'الدرجة', o.level) +
- `<div class="fl"><label>الجنس</label><select data-filter="gender"><option value="">الكل</option><option value="male" ${App.filters.gender === 'male' ? 'selected' : ''}>ذكر</option><option value="female" ${App.filters.gender === 'female' ? 'selected' : ''}>أنثى</option></select></div>` +
- `<div class="fl"><label>الجنسية (تصنيف)</label><select data-filter="saudi"><option value="">الكل</option><option value="saudi" ${App.filters.saudi === 'saudi' ? 'selected' : ''}>سعودي</option><option value="non_saudi" ${App.filters.saudi === 'non_saudi' ? 'selected' : ''}>غير سعودي</option></select></div>` +
- `<button class="filter-reset" id="filterReset">✕ مسح الفلاتر</button>`;
+ sel('period', T('f_period'), snaps.map((s) => ({ id: s.id, label: s.periodLabel || s.period })), true) +
+ sel('division', T('hotel'), o.division) +
+ sel('department', T('f_dept'), o.department) +
+ sel('position', T('f_position'), o.position) +
+ sel('nationality', T('f_nationality'), o.nationality) +
+ sel('level', T('f_level'), o.level) +
+ `<div class="fl"><label>${T('f_gender')}</label><select data-filter="gender"><option value="">${A_ALL}</option><option value="male" ${App.filters.gender === 'male' ? 'selected' : ''}>${T('f_male')}</option><option value="female" ${App.filters.gender === 'female' ? 'selected' : ''}>${T('f_female')}</option></select></div>` +
+ `<div class="fl"><label>${T('f_class')}</label><select data-filter="saudi"><option value="">${A_ALL}</option><option value="saudi" ${App.filters.saudi === 'saudi' ? 'selected' : ''}>${T('f_saudi')}</option><option value="non_saudi" ${App.filters.saudi === 'non_saudi' ? 'selected' : ''}>${T('f_nonsaudi')}</option></select></div>` +
+ `<button class="filter-reset" id="filterReset">✕ ${T('f_reset')}</button>`;
  $$('#filterbar select').forEach((s) => s.addEventListener('change', () => {
  App.filters[s.dataset.filter] = s.value; renderActiveFilters(); route();
  }));
  $('#filterReset').addEventListener('click', () => { App.filters = {}; renderFilters(); renderActiveFilters(); route(); });
  renderActiveFilters();
  }
- const FILTER_LABELS = { period: 'الفترة', division: 'المنشأة', department: 'القسم', position: 'المسمى', nationality: 'الجنسية', level: 'الدرجة', gender: 'الجنس', saudi: 'التصنيف' };
+ const FILTER_LABELS = { period: 'f_period', division: 'hotel', department: 'f_dept', position: 'f_position', nationality: 'f_nationality', level: 'f_level', gender: 'f_gender', saudi: 'f_class' };
  function renderActiveFilters() {
  const el = $('#activeFilters'); const active = Object.entries(App.filters).filter(([k, v]) => v && k !== 'period');
  if (!active.length || App.currentRoute === 'upload') { el.innerHTML = ''; return; }
  el.innerHTML = active.map(([k, v]) => {
  let disp = v; if (k === 'period') { const s = (App.state.snapshots || []).find((x) => x.id === v); disp = s ? s.periodLabel : v; }
- if (k === 'gender') disp = v === 'male' ? 'ذكر' : 'أنثى'; if (k === 'saudi') disp = v === 'saudi' ? 'سعودي' : 'غير سعودي';
- return `<span class="af"><b>${FILTER_LABELS[k]}:</b> ${fmt.esc(disp)} <span data-clear="${k}">✕</span></span>`;
+ if (k === 'gender') disp = v === 'male' ? T('f_male') : T('f_female'); if (k === 'saudi') disp = v === 'saudi' ? T('f_saudi') : T('f_nonsaudi');
+ return `<span class="af"><b>${T(FILTER_LABELS[k] || k)}:</b> ${fmt.esc(disp)} <span data-clear="${k}">✕</span></span>`;
  }).join('');
  $$('#activeFilters [data-clear]').forEach((x) => x.addEventListener('click', () => { delete App.filters[x.dataset.clear]; renderFilters(); route(); }));
  }

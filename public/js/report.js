@@ -419,6 +419,52 @@
 
   window.Report = { open, REPORTS, RL };
 
+  // ---- Hotels comparison page --------------------------------------------
+  window.Pages = window.Pages || {};
+  window.Pages.hotels = async function (content) {
+    const il = window.I18N.lang, t = (k) => window.I18N.t(k);
+    const ar = il === 'ar';
+    if (!window.App.state || !window.App.state.hasData) {
+      content.innerHTML = `<div class="page-head"><div><h2>${t('n_hotels')}</h2></div></div><div class="empty"><h3>${ar ? 'لا توجد بيانات' : 'No data'}</h3></div>`;
+      return;
+    }
+    content.innerHTML = '<div class="spinner"></div>';
+    const wf = await window.App.api('/api/workforce' + window.App.qs());
+    const rows = (wf.byDivision || []).slice();
+    const k = wf.kpis || {};
+    const esc = fmt.esc;
+    const head = `<div class="page-head"><div><h2>${t('n_hotels')}</h2><div class="sub">${ar ? 'مقارنة الفنادق جنباً إلى جنب — الأعداد والسعودة والتركيبة' : 'Side-by-side hotel comparison — headcount, Saudization, composition'}</div></div>
+      <div class="ph-actions no-print"><button class="btn" id="hotelReport">${window.icon ? window.icon('printer') : ''} ${t('preview_print')}</button></div></div>`;
+    const kpis = `<div class="kpi-grid">
+      <div class="kpi"><div class="k-top"><span class="k-label">${t('hotels')}</span></div><div class="k-val">${fmt.n(rows.length)}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">${ar ? 'إجمالي الموظفين' : 'Total Employees'}</span></div><div class="k-val">${fmt.n(k.total_employees)}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">${ar ? 'السعوديون' : 'Saudis'}</span></div><div class="k-val">${fmt.n(k.saudi_employees)}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">${ar ? 'نسبة السعودة' : 'Saudization'}</span></div><div class="k-val">${fmt.pct(k.saudi_pct)}</div></div></div>`;
+    const table = `<div class="panel" style="margin-bottom:16px"><div class="panel-head"><h3>${ar ? 'مقارنة الفنادق' : 'Hotel Comparison'}</h3></div><div class="panel-body tbl-wrap">
+      <table class="tbl clickable"><thead><tr><th>${t('hotel')}</th><th>${ar ? 'الإجمالي' : 'Total'}</th><th>${ar ? 'سعودي' : 'Saudi'}</th><th>${ar ? 'غير سعودي' : 'Non-Saudi'}</th><th>${ar ? 'ذكور' : 'Male'}</th><th>${ar ? 'إناث' : 'Female'}</th><th>${ar ? 'الأقسام' : 'Depts'}</th><th>${ar ? 'السعودة %' : 'Saudization %'}</th></tr></thead><tbody>
+      ${rows.map((g) => `<tr data-hotel="${esc(g.key)}"><td><b>${esc(g.key)}</b></td><td class="num">${fmt.n(g.total)}</td><td class="num">${fmt.n(g.saudi)}</td><td class="num">${fmt.n(g.non_saudi)}</td><td class="num">${fmt.n(g.male)}</td><td class="num">${fmt.n(g.female)}</td><td class="num">${fmt.n(g.positions)}</td><td class="num"><span class="badge ${g.saudi_pct >= 60 ? 'b-ok' : g.saudi_pct >= 30 ? 'b-warn' : 'b-danger'}">${fmt.pct(g.saudi_pct, 1)}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    const charts = `<div class="grid g-2">
+      <div class="panel"><div class="panel-head"><h3>${ar ? 'الموظفون حسب الفندق' : 'Headcount by Hotel'}</h3></div><div class="panel-body"><div id="chHotelCount" class="chart"></div></div></div>
+      <div class="panel"><div class="panel-head"><h3>${ar ? 'التركيبة (سعودي / غير سعودي)' : 'Composition (Saudi / Non-Saudi)'}</h3></div><div class="panel-body"><div id="chHotelMix" class="chart"></div></div></div></div>`;
+    content.innerHTML = head + kpis + table + charts;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const cats = rows.map((g) => g.key);
+      if (window.Chart) {
+        Chart.barH(document.getElementById('chHotelCount'), cats, rows.map((g) => g.total), { labelWidth: 150 });
+        Chart.stacked(document.getElementById('chHotelMix'), cats, [
+          { name: ar ? 'سعودي' : 'Saudi', data: rows.map((g) => g.saudi), color: '#1E883F' },
+          { name: ar ? 'غير سعودي' : 'Non-Saudi', data: rows.map((g) => g.non_saudi), color: '#C49A3A' },
+        ], { horizontal: true, labelWidth: 150 });
+      }
+    }));
+    content.querySelectorAll('tr[data-hotel]').forEach((tr) => tr.addEventListener('click', () => {
+      window.App.filters.division = tr.dataset.hotel; location.hash = '#/dashboard';
+    }));
+    const rb = document.getElementById('hotelReport');
+    if (rb) rb.addEventListener('click', () => window.Report.open('hotels', { lang: window.I18N.lang, orient: 'landscape', division: window.App.filters.division || '' }));
+  };
+
   // ---- Reports Center page (registered on window.Pages) -------------------
   const DESC = {
     executive: { ar: 'ملخص تنفيذي شامل بالمؤشرات الرئيسية والتوزيع والسعودة — للإدارة العليا.', en: 'Board-level summary: key KPIs, composition and Saudization.' },

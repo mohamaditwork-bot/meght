@@ -61,7 +61,22 @@ export function buildRecords(headers, rows, mapping, normalizationMaps = {}) {
     return rec;
   });
 
-  return { records, dynamicFields };
+  return { records: dedupeByCode(records), dynamicFields };
+}
+
+// Update-not-duplicate: when the same employee_code appears more than once
+// (e.g. a corrected row later in the same file, or a re-listed employee),
+// keep the LAST occurrence so the newest values win. Rows with no code are
+// left untouched (cannot be safely de-duplicated).
+export function dedupeByCode(records) {
+  const seen = new Map();
+  const noCode = [];
+  for (const r of records) {
+    const code = r.employee_code == null ? '' : String(r.employee_code).trim();
+    if (!code) { noCode.push(r); continue; }
+    seen.set(code, r); // later wins
+  }
+  return [...seen.values(), ...noCode];
 }
 
 function coerce(val, type) {
