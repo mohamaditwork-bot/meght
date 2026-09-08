@@ -12,7 +12,7 @@ import { buildRecords } from './src/transform.js';
 import { validate } from './src/validation.js';
 import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from './src/analytics.js';
 import { compareSnapshots, movementSummary, buildTimeline } from './src/movements.js';
-import { complianceMatrix, buildAlerts, missingDocuments, statusOf } from './src/expiry.js';
+import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from './src/expiry.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from './src/localization.js';
 import { generateInsights, executiveSummary } from './src/insights.js';
 import * as store from './src/store.js';
@@ -224,7 +224,7 @@ app.get('/api/expiry', requirePerm('view_expiry'), (req, res) => {
   const ds = filtered(req); if (!ds) return res.json({ empty: true });
   res.json({
     matrix: complianceMatrix(ds.records, ds.asOf),
-    missing: missingDocuments(ds.records),
+    missing: missingDocuments(ds.records, ds.asOf),
     fields: EXPIRY_FIELDS,
   });
 });
@@ -254,7 +254,7 @@ app.get('/api/employee/:code', requirePerm('view_employees'), (req, res) => {
   const rec = active.data.records.find((r) => String(r.employee_code) === String(code));
   if (!rec) return res.status(404).json({ error: 'not_found' });
   const asOf = active.meta.asOf;
-  const docs = EXPIRY_FIELDS.map((f) => { const d = daysUntil(rec[f.key], asOf); return { key: f.key, label: f.label, labelEn: f.labelEn, date: rec[f.key], days: d, status: statusOf(d) }; });
+  const docs = EXPIRY_FIELDS.map((f) => { const d = daysUntil(rec[f.key], asOf); return { key: f.key, label: f.label, labelEn: f.labelEn, date: rec[f.key], days: d, status: docStatus(rec, f.key, asOf) }; });
   // Timeline across all snapshots
   const snaps = store.listSnapshots().map((s) => {
     const data = store.loadSnapshot(s.id);

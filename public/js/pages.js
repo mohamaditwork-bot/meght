@@ -406,9 +406,9 @@
  const alerts = a.alerts || [];
  const byPr = { critical: 0, high: 0, medium: 0, low: 0 };
  alerts.forEach((x) => byPr[x.priority]++);
- const bucketKeys = ['expired', 'd0_30', 'd31_60', 'd61_90', 'd91_180', 'valid', 'missing'];
- const bucketLabels = { expired: 'منتهية', d0_30: '0–30', d31_60: '31–60', d61_90: '61–90', d91_180: '91–180', valid: 'سارية', missing: 'غير متوفرة' };
- const bucketColors = { expired: '#dc2626', d0_30: '#f59e0b', d31_60: '#eab308', d61_90: '#3b82f6', d91_180: '#0891b2', valid: '#16a34a', missing: '#94a3b8' };
+ const bucketKeys = ['expired', 'd0_30', 'd31_60', 'd61_90', 'd91_180', 'valid', 'indefinite', 'not_applicable', 'missing'];
+ const bucketLabels = { expired: 'منتهية', d0_30: '0–30', d31_60: '31–60', d61_90: '61–90', d91_180: '91–180', valid: 'سارية', indefinite: 'غير محدد المدة', not_applicable: 'لا ينطبق', missing: 'غير متوفرة' };
+ const bucketColors = { expired: '#C0392B', d0_30: '#D4820F', d31_60: '#b7791f', d61_90: '#1A6EA3', d91_180: '#0f766e', valid: '#1E883F', indefinite: '#156835', not_applicable: '#94a3a8', missing: '#7A9B84' };
  content.innerHTML = head('مركز الانتهاء والامتثال', 'مراقبة العقود والوثائق والإقامات — الخانة الفارغة تُصنّف «غير متوفرة» وليست «سارية»', printBtn()) +
  `<div class="kpi-grid">
  ${kpi({ label: 'تنبيهات حرجة', value: fmt.n(byPr.critical), accent: 'red', ico: 'circle', sub: 'منتهية أو ≤7 أيام' })}
@@ -460,7 +460,8 @@
  try { r = await api('/api/employee/' + encodeURIComponent(code) + (App.filters.period ? '?period=' + App.filters.period : '')); }
  catch (e) { content.innerHTML = `<div class="empty"><h3>الموظف غير موجود</h3><a href="#/employees" class="btn">عودة للبحث</a></div>`; return; }
  const e = r.employee;
- const docRow = (d) => `<div class="info-cell"><div class="l">${fmt.esc(d.label)}</div><div class="v">${fmt.date(d.date)} ${complianceStatus(d.days)}</div></div>`;
+ const toneCls = { ok: 'b-ok', warn: 'b-warn', danger: 'b-danger', watch: 'b-watch', muted: 'b-muted' };
+ const docRow = (d) => { const st = d.status || {}; const val = d.date ? fmt.date(d.date) : ''; return `<div class="info-cell"><div class="l">${fmt.esc(d.label)}</div><div class="v">${val} <span class="badge ${toneCls[st.tone] || 'b-muted'}">${fmt.esc(st.label || '—')}</span></div></div>`; };
  content.innerHTML = head('ملف الموظف 360°', '', `<a href="#/employees" class="btn">← البحث</a>` + printBtn()) +
  `<div class="emp-hero"><div class="e-av">${fmt.esc((e.arabic_name || e.name || 'م').trim().charAt(0))}</div>
  <div style="flex:1;min-width:200px"><div class="e-name">${fmt.esc(e.arabic_name || e.name)}</div><div class="e-meta">${fmt.esc(e.name || '')} · الرقم الوظيفي ${fmt.esc(e.employee_code)}</div>

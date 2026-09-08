@@ -1,5 +1,10 @@
-// expiry.js — Expiry & Compliance Center. A blank date is classified as
-// "Missing / Not Available", never as "Valid".
+// expiry.js — Expiry & Compliance Center. Document classification is
+// nationality-aware:
+//   • A Saudi with no contract-expiry date has an INDEFINITE-TERM contract
+//     (عقد غير محدد المدة) — valid, never "missing" or an alert.
+//   • Iqama/Passport do not apply to Saudi nationals — "لا ينطبق", never "missing".
+//   • Probation with no date simply means the employee is not on probation.
+// Only genuinely-required-but-empty fields are "Missing / Not Available".
 
 import { daysUntil } from './util.js';
 import { EXPIRY_FIELDS } from './schema.js';
@@ -11,6 +16,8 @@ export const BUCKETS = [
   { key: 'd61_90', label: '61–90 يوم', labelEn: '61–90 Days' },
   { key: 'd91_180', label: '91–180 يوم', labelEn: '91–180 Days' },
   { key: 'valid', label: 'سارية >180 يوم', labelEn: 'Valid >180 Days' },
+  { key: 'indefinite', label: 'غير محدد المدة', labelEn: 'Indefinite Term' },
+  { key: 'not_applicable', label: 'لا ينطبق', labelEn: 'Not Applicable' },
   { key: 'missing', label: 'غير متوفرة', labelEn: 'Missing / Not Available' },
 ];
 
@@ -24,21 +31,37 @@ export function bucketOf(days) {
   return 'valid';
 }
 
-export function statusOf(days) {
-  if (days === null) return { key: 'missing', label: 'غير متوفر', tone: 'muted' };
-  if (days < 0) return { key: 'expired', label: 'منتهية', tone: 'danger' };
-  if (days <= 30) return { key: 'soon', label: 'تنتهي قريباً', tone: 'warn' };
-  if (days <= 90) return { key: 'watch', label: 'قيد المتابعة', tone: 'watch' };
-  return { key: 'valid', label: 'سارية', tone: 'ok' };
+// Nationality-aware category for a document field of one employee.
+export function docCategory(emp, field, asOfISO) {
+  const v = emp[field];
+  if (v) return bucketOf(daysUntil(v, asOfISO));
+  // empty value:
+  if (field === 'contract_expire_date') return emp.is_saudi ? 'indefinite' : 'missing';
+  if (field === 'residence_expire_date' || field === 'passport_expire_date') return emp.is_saudi ? 'not_applicable' : 'missing';
+  if (field === 'probation_date') return 'not_applicable';
+  return 'missing';
+}
+
+// Status for the Employee 360 profile (label + tone).
+export function docStatus(emp, field, asOfISO) {
+  const cat = docCategory(emp, field, asOfISO);
+  const days = daysUntil(emp[field], asOfISO);
+  switch (cat) {
+    case 'indefinite': return { key: 'indefinite', label: 'غير محدد المدة', tone: 'ok', days: null };
+    case 'not_applicable': return { key: 'na', label: 'لا ينطبق', tone: 'muted', days: null };
+    case 'missing': return { key: 'missing', label: 'غير متوفر', tone: 'muted', days: null };
+    case 'expired': return { key: 'expired', label: 'منتهية', tone: 'danger', days };
+    case 'd0_30': return { key: 'soon', label: 'تنتهي قريباً', tone: 'warn', days };
+    case 'd31_60': case 'd61_90': return { key: 'watch', label: 'قيد المتابعة', tone: 'watch', days };
+    default: return { key: 'valid', label: 'سارية', tone: 'ok', days };
+  }
 }
 
 export function complianceMatrix(records, asOfISO) {
   const matrix = {};
   for (const f of EXPIRY_FIELDS) {
     const counts = Object.fromEntries(BUCKETS.map((b) => [b.key, 0]));
-    for (const r of records) {
-      counts[bucketOf(daysUntil(r[f.key], asOfISO))]++;
-    }
+    for (const r of records) counts[docCategory(r, f.key, asOfISO)]++;
     matrix[f.key] = { label: f.label, labelEn: f.labelEn, counts };
   }
   return matrix;
@@ -55,11 +78,14 @@ export function priorityOf(days) {
   return null;
 }
 
-// Build the alerts list (documents within 90 days or expired), sorted by urgency.
+// Alerts only for documents that actually have a date and are due/expired.
+// Indefinite contracts and not-applicable documents never raise an alert.
 export function buildAlerts(records, asOfISO) {
   const alerts = [];
   for (const r of records) {
     for (const f of EXPIRY_FIELDS) {
+      const cat = docCategory(r, f.key, asOfISO);
+      if (cat === 'indefinite' || cat === 'not_applicable' || cat === 'missing') continue;
       const days = daysUntil(r[f.key], asOfISO);
       const pr = priorityOf(days);
       if (!pr) continue;
@@ -76,13 +102,13 @@ export function buildAlerts(records, asOfISO) {
   return alerts;
 }
 
-// Missing-document report — blanks explicitly surfaced (not assumed valid).
-export function missingDocuments(records) {
+// Genuinely-missing documents only (excludes Saudi indefinite/not-applicable).
+export function missingDocuments(records, asOfISO) {
   const fields = ['contract_expire_date', 'health_card_expire_date', 'residence_expire_date', 'passport_expire_date'];
   const out = { by_field: {}, employees: [] };
   for (const f of fields) out.by_field[f] = 0;
   for (const r of records) {
-    const missing = fields.filter((f) => r[f] === null);
+    const missing = fields.filter((f) => docCategory(r, f, asOfISO) === 'missing');
     if (missing.length) {
       out.employees.push({ employee_code: r.employee_code, name: r.name, arabic_name: r.arabic_name, section: r.section, missing });
       for (const f of missing) out.by_field[f]++;

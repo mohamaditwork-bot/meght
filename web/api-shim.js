@@ -2,13 +2,13 @@
 // the standalone hosted demo. Replicates the server's REST routes over the
 // embedded snapshots. (Login here is a client-side demo gate; the full app uses
 // a hashed server passcode.)
-import { SNAPSHOTS as SEED_SNAPSHOTS, META as SEED_META } from './embed-data.js';
+import { SNAPSHOTS as SEED_SNAPSHOTS, META as SEED_META, RULES as SEED_RULES } from './embed-data.js';
 import { proposeMapping } from '../src/mapping.js';
 import { buildRecords } from '../src/transform.js';
 import { validate } from '../src/validation.js';
 import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from '../src/analytics.js';
 import { compareSnapshots, movementSummary, buildTimeline } from '../src/movements.js';
-import { complianceMatrix, buildAlerts, missingDocuments, statusOf } from '../src/expiry.js';
+import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from '../src/expiry.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from '../src/localization.js';
 import { generateInsights, executiveSummary } from '../src/insights.js';
 import { daysUntil } from '../src/util.js';
@@ -52,7 +52,7 @@ const ADMIN = {
     'view_insights', 'view_reports', 'export_reports', 'view_audit', 'manage_users'],
 };
 let session = { user: null };
-let RULES = [];
+let RULES = (typeof SEED_RULES !== 'undefined' && SEED_RULES) ? SEED_RULES.slice() : [];
 const ordered = () => META.snapshots.slice().sort((a, b) => ((a.period || '') + (a.asOf || '')).localeCompare((b.period || '') + (b.asOf || ''))); // chronological
 const activeId = () => META.activeSnapshotId;
 
@@ -142,7 +142,7 @@ R['GET /api/salary'] = (q) => { const d = fq(q); const k = computeKPIs(d.records
     byLevel: groupBy(d.records, 'level_code', d.asOf).map((g) => ({ key: g.key, payroll: g.payroll, avg: g.avg_salary, total: g.total })),
     byPosition: groupBy(d.records, 'position', d.asOf).map((g) => ({ key: g.key, payroll: g.payroll, avg: g.avg_salary, min: g.min_salary, max: g.max_salary, total: g.total })),
     histogram: salaryHistogram(d.records) }); };
-R['GET /api/expiry'] = (q) => { const d = fq(q); return ok({ matrix: complianceMatrix(d.records, d.asOf), missing: missingDocuments(d.records), fields: EXPIRY_FIELDS }); };
+R['GET /api/expiry'] = (q) => { const d = fq(q); return ok({ matrix: complianceMatrix(d.records, d.asOf), missing: missingDocuments(d.records, d.asOf), fields: EXPIRY_FIELDS }); };
 R['GET /api/alerts'] = (q) => { const d = fq(q); return ok({ alerts: buildAlerts(d.records, d.asOf) }); };
 R['GET /api/employees'] = (q) => { const d = fq(q); const term = String(q.q || '').trim().toLowerCase(); let recs = d.records;
   if (term) recs = recs.filter((r) => String(r.employee_code ?? '').toLowerCase().includes(term) || String(r.name ?? '').toLowerCase().includes(term) || String(r.arabic_name ?? '').includes(q.q.trim()) || String(r.section ?? '').includes(q.q.trim()) || String(r.position ?? '').includes(q.q.trim()));
@@ -183,7 +183,7 @@ function dynamic(method, pathname, q) {
     const code = decodeURIComponent(m[1]); const active = SNAPSHOTS[q.period && SNAPSHOTS[q.period] ? q.period : activeId()];
     const rec = active.records.find((r) => String(r.employee_code) === String(code));
     if (!rec) return { status: 404, body: { error: 'not_found' } };
-    const docs = EXPIRY_FIELDS.map((f) => { const dd = daysUntil(rec[f.key], active.asOf); return { key: f.key, label: f.label, labelEn: f.labelEn, date: rec[f.key], days: dd, status: statusOf(dd) }; });
+    const docs = EXPIRY_FIELDS.map((f) => { const dd = daysUntil(rec[f.key], active.asOf); return { key: f.key, label: f.label, labelEn: f.labelEn, date: rec[f.key], days: dd, status: docStatus(rec, f.key, active.asOf) }; });
     const snaps = ordered().map((s) => ({ period: s.periodLabel, date: s.asOf, record: SNAPSHOTS[s.id].records.find((x) => String(x.employee_code) === String(code)) || null }));
     return ok({ employee: rec, documents: docs, timeline: buildTimeline(code, snaps), canSalary: true });
   }

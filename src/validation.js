@@ -4,6 +4,7 @@
 
 import { CORE_BY_KEY, FIELD_TYPES, DATE_KEYS } from './schema.js';
 import { suggestNormalization, NORMALIZE_FIELDS } from './normalize.js';
+import { docCategory } from './expiry.js';
 
 export function validate(records, mapping) {
   const mappedKeys = new Set(mapping.filter((m) => !m.isDynamic).map((m) => m.mappedKey));
@@ -41,12 +42,13 @@ export function validate(records, mapping) {
     }
   }
 
-  // Missing documents (expiry fields blank) — flagged as Missing, never "Valid"
+  // Genuinely-missing documents only (a Saudi's blank contract is an indefinite
+  // term, blank iqama/passport do not apply to Saudis — none of these are gaps).
   const docFields = ['contract_expire_date', 'health_card_expire_date', 'residence_expire_date', 'passport_expire_date'];
   let missingDocCount = 0;
   for (const r of records) {
     for (const df of docFields) {
-      if (mappedKeys.has(df) && r[df] === null) missingDocCount++;
+      if (mappedKeys.has(df) && docCategory(r, df, null) === 'missing') missingDocCount++;
     }
   }
 
@@ -107,44 +109,34 @@ function computeQualityScore({ records, mappedKeys, issues, normalization, missi
   const parts = [];
   const add = (label, weight, value, reason) => parts.push({ label, weight, value, reason });
 
-  // Completeness of core identity fields
+  // Data Quality here measures the INTEGRITY of the data that is present — not
+  // document coverage. A blank optional/not-applicable document (e.g. a Saudi's
+  // indefinite contract, or iqama/passport that don't apply to Saudis) is not a
+  // quality defect, so it does not reduce the score. Empty-document coverage and
+  // spelling-normalisation suggestions are reported separately as guidance.
+
+  // Completeness of core identity fields (code, name, section, position)
   const identityFields = ['employee_code', 'name', 'section', 'position'].filter((k) => mappedKeys.has(k));
   let filled = 0, cells = 0;
   for (const r of records) for (const k of identityFields) { cells++; if (valOf(r[k])) filled++; }
   const completeness = cells ? filled / cells : 1;
-  add('اكتمال بيانات الهوية', 25, completeness,
+  add('اكتمال البيانات الأساسية', 35, completeness,
     completeness < 1 ? `${cells - filled} خانة أساسية ناقصة` : null);
 
   // Unique keys
   const dup = issues.duplicate_code.length;
   const uniq = 1 - Math.min(1, dup / total);
-  add('تفرد الرقم الوظيفي', 15, uniq, dup ? `${dup} رقم وظيفي مكرر` : null);
+  add('تفرد الرقم الوظيفي', 25, uniq, dup ? `${dup} رقم وظيفي مكرر` : null);
 
-  // Valid dates
+  // Valid dates (a date value present in the file that cannot be parsed)
   const invDates = issues.invalid_date.length;
   const dateScore = 1 - Math.min(1, invDates / Math.max(1, total));
-  add('صحة التواريخ', 12, dateScore, invDates ? `${invDates} تاريخ غير صالح` : null);
-
-  // Category consistency (nationality, section, position)
-  for (const [f, label, w] of [['nationality', 'تناسق الجنسيات', 12], ['section', 'تناسق الأقسام', 10], ['position', 'تناسق المسميات', 8]]) {
-    if (!mappedKeys.has(f)) { add(label, w, 1, null); continue; }
-    const sug = normalization[f];
-    const variants = sug ? sug.suggestions.length : 0;
-    const distinct = sug ? sug.distinct : 1;
-    const cons = 1 - Math.min(1, variants / Math.max(1, distinct));
-    add(label, w, cons, variants ? `${variants} اختلاف إملائي محتمل` : null);
-  }
-
-  // Document completeness
-  const docFields = ['contract_expire_date', 'health_card_expire_date', 'residence_expire_date', 'passport_expire_date'].filter((k) => mappedKeys.has(k));
-  const docCells = docFields.length * total;
-  const docScore = docCells ? 1 - Math.min(1, missingDocCount / docCells) : 1;
-  add('اكتمال بيانات الوثائق', 10, docScore, missingDocCount ? `${missingDocCount} حقل وثيقة فارغ` : null);
+  add('صحة التواريخ', 20, dateScore, invDates ? `${invDates} تاريخ غير صالح` : null);
 
   // Logical salary values
   const badSal = issues.illogical_salary.length;
   const salScore = 1 - Math.min(1, badSal / Math.max(1, total));
-  add('منطقية القيم', 8, salScore, badSal ? `${badSal} راتب غير منطقي` : null);
+  add('منطقية القيم', 20, salScore, badSal ? `${badSal} راتب غير منطقي` : null);
 
   const totalWeight = parts.reduce((a, p) => a + p.weight, 0);
   const scorePct = parts.reduce((a, p) => a + p.weight * p.value, 0) / totalWeight * 100;

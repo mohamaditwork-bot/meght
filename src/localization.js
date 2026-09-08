@@ -92,7 +92,13 @@ export function newRuleTemplate() {
 // Match a rule to a group of employees by occupation/position (canonical).
 export function ruleForPosition(rules, positionName) {
   if (!positionName) return null;
-  const pn = String(positionName).trim();
-  const active = rules.filter((r) => r.status === 'active' && r.required_pct != null);
-  return active.find((r) => (r.occupations || []).some((o) => String(o).trim() === pn)) || null;
+  const pn = norm(positionName);
+  const active = (rules || []).filter((r) => r.status === 'active' && r.required_pct != null);
+  // Match a classified occupation to the position: exact, or one contains the
+  // other (handles minor title variants like "حارس أمن" vs "حارس الأمن").
+  return active.find((r) => (r.occupations || []).some((o) => {
+    const on = norm(o);
+    return on && (on === pn || pn.includes(on) || on.includes(pn));
+  })) || null;
 }
+function norm(s) { return String(s == null ? '' : s).trim().replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' '); }
