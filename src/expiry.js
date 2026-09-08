@@ -31,13 +31,26 @@ export function bucketOf(days) {
   return 'valid';
 }
 
-// Nationality-aware category for a document field of one employee.
+// Food-handling roles require a health certificate (البطاقة الصحية) regardless of
+// nationality — kitchen, waiters, baristas, restaurant/F&B, food prep, etc.
+const FOOD_KEYWORDS = ['طباخ', 'طاهي', 'طهاة', 'طهاه', 'شيف', 'نادل', 'مطعم', 'مطاعم', 'مضيف',
+  'اغذيه', 'مشروبات', 'باريستا', 'قهوه', 'كوفي', 'مطبخ', 'حلوان', 'حلوي', 'كافتريا', 'كافيه',
+  'بوفيه', 'ستيوارد', 'تحضير', 'تجهيز', 'خدمه الغرف', 'روم سيرفس', 'بار'];
+function norm(s) { return String(s == null ? '' : s).replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase(); }
+export function isFoodHandler(emp) {
+  const p = norm(emp && emp.position);
+  if (!p) return false;
+  return FOOD_KEYWORDS.some((k) => p.includes(norm(k)));
+}
+
+// Nationality- and role-aware category for a document field of one employee.
 export function docCategory(emp, field, asOfISO) {
   const v = emp[field];
   if (v) return bucketOf(daysUntil(v, asOfISO));
   // empty value:
-  if (field === 'contract_expire_date') return emp.is_saudi ? 'indefinite' : 'missing';
-  if (field === 'residence_expire_date' || field === 'passport_expire_date') return emp.is_saudi ? 'not_applicable' : 'missing';
+  if (field === 'contract_expire_date') return emp.is_saudi ? 'indefinite' : 'missing';       // contract expiry applies to foreigners only
+  if (field === 'residence_expire_date' || field === 'passport_expire_date') return emp.is_saudi ? 'not_applicable' : 'missing'; // iqama/passport for foreigners only
+  if (field === 'health_card_expire_date') return isFoodHandler(emp) ? 'missing' : 'not_applicable'; // health card only for food-handling roles
   if (field === 'probation_date') return 'not_applicable';
   return 'missing';
 }
