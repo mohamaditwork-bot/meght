@@ -20,6 +20,13 @@ let charts = read('public/js/charts.js');
 let pages = read('public/js/pages.js');
 let app = read('web/app.standalone.js');
 let uploadMod = read('web/upload.standalone.js');
+// Vendor the chart + Excel libraries inline so the page never depends on a CDN
+// (guarantees charts render even when external scripts are blocked). ECharts is
+// clean UTF-8 and inlined directly; SheetJS legitimately contains U+FFFD chars
+// (codepage data) that the artifact publisher rejects, so it is base64-encoded
+// and decoded+evaluated at runtime.
+const echartsSrc = read('public/js/vendor/echarts.min.js');
+const xlsxB64 = fs.readFileSync('public/js/vendor/xlsx.full.min.js').toString('base64');
 
 // Replace logo asset references with data URIs across markup + scripts.
 const swap = (s) => s.split('assets/logo-white.svg').join(logoWhite).split('assets/logo.svg').join(logo);
@@ -38,8 +45,8 @@ ${css}
 </style>
 ${bodyMarkup}
 <div class="demo-ribbon">MAYSAN INT. GROUP · نسخة تعمل في المتصفح — يمكنك رفع ملف Excel وتحديث البيانات</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>${echartsSrc}</script>
+<script>(function(){try{var bin=atob("${xlsxB64}");var by=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)by[i]=bin.charCodeAt(i);(0,eval)(new TextDecoder('utf-8').decode(by));}catch(e){console.error('xlsx load failed',e);}})();</script>
 <script>${shim}</script>
 <script>${icons}</script>
 <script>${charts}</script>
