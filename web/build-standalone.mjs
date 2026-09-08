@@ -33,7 +33,7 @@ const swap = (s) => s.split('assets/logo-white.svg').join(logoWhite).split('asse
 bodyMarkup = swap(bodyMarkup);
 pages = swap(pages); charts = swap(charts); app = swap(app); shim = swap(shim); uploadMod = swap(uploadMod);
 
-const html = `<title>MAYSAN HR Intelligence</title>
+const html = `<title>MAYSAN INT. GROUP — الموارد البشرية</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@ ${css}
 @media print{.demo-ribbon{display:none}}
 </style>
 ${bodyMarkup}
-<div class="demo-ribbon">MAYSAN INT. GROUP · نسخة تعمل في المتصفح — يمكنك رفع ملف Excel وتحديث البيانات</div>
+<div class="demo-ribbon">MAYSAN INT. GROUP · يمكنك رفع ملف Excel وتحديث البيانات مباشرة</div>
 <script>${echartsSrc}</script>
 <script>(function(){try{var bin=atob("${xlsxB64}");var by=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)by[i]=bin.charCodeAt(i);(0,eval)(new TextDecoder('utf-8').decode(by));}catch(e){console.error('xlsx load failed',e);}})();</script>
 <script>${shim}</script>

@@ -48,7 +48,7 @@
  </div></div>`;
  }
  function printFooter() {
- return `<div class="print-footer"><span>MAYSAN INT. GROUP — HR Intelligence Platform</span><span>وثيقة سرّية · للاستخدام الداخلي فقط</span></div>`;
+ return `<div class="print-footer"><span>MAYSAN INT. GROUP — الموارد البشرية</span><span>وثيقة سرّية · للاستخدام الداخلي فقط</span></div>`;
  }
  Pages.printCurrent = function () {
  const c = el('content');

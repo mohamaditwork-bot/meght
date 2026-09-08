@@ -46,13 +46,26 @@ export function isFoodHandler(emp) {
 // Nationality- and role-aware category for a document field of one employee.
 export function docCategory(emp, field, asOfISO) {
   const v = emp[field];
+  // Probation matters only while the employee is STILL on probation (a future
+  // date). A past probation date means it already ended (employee confirmed) —
+  // we don't surface it. Empty = not on probation.
+  if (field === 'probation_date') {
+    if (!v) return 'not_applicable';
+    const d = daysUntil(v, asOfISO);
+    return (d === null || d < 0) ? 'not_applicable' : bucketOf(d);
+  }
   if (v) return bucketOf(daysUntil(v, asOfISO));
   // empty value:
   if (field === 'contract_expire_date') return emp.is_saudi ? 'indefinite' : 'missing';       // contract expiry applies to foreigners only
   if (field === 'residence_expire_date' || field === 'passport_expire_date') return emp.is_saudi ? 'not_applicable' : 'missing'; // iqama/passport for foreigners only
   if (field === 'health_card_expire_date') return isFoodHandler(emp) ? 'missing' : 'not_applicable'; // health card only for food-handling roles
-  if (field === 'probation_date') return 'not_applicable';
   return 'missing';
+}
+
+// Is the employee currently on probation (a probation date still in the future)?
+export function onProbation(emp, asOfISO) {
+  const d = daysUntil(emp.probation_date, asOfISO);
+  return d !== null && d >= 0;
 }
 
 // Status for the Employee 360 profile (label + tone).

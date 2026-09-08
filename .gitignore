@@ -8,3 +8,4 @@ data/uploads/
 *.tmp
 .netlify/
 web/shim.bundle.js
+scratchpad/
