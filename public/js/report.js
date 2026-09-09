@@ -393,6 +393,21 @@
     }
   }
 
+  // Trigger the browser print dialog. In a restricted preview sandbox (the
+  // published-link iframe) window.print() can be blocked and throw / no-op; in
+  // that case guide the user to the runnable app where Save-as-PDF works fully.
+  function doPrint() {
+    const ar = window.I18N.lang === 'ar';
+    let opened = false;
+    try { const r = window.print(); opened = r !== false; } catch (e) { opened = false; }
+    // A blocked sandbox print returns immediately without a dialog; give guidance.
+    setTimeout(() => {
+      if (window.toast) window.toast(ar
+        ? 'إن لم تظهر نافذة الطباعة: افتح النظام من التطبيق المشغّل (npm start) أو النسخة المنشورة على نطاقك، ثم اضغط طباعة واختر «حفظ PDF». الطباعة قد تكون محجوبة في معاينة الرابط.'
+        : 'If the print dialog did not appear, open the app from the running server or your deployed site, then Print → Save as PDF. Printing may be blocked in the preview link.', opened ? 'ok' : '');
+    }, 700);
+  }
+
   function showOverlay(show) {
     let ov = document.getElementById('reportOverlay');
     if (!ov) {
@@ -405,7 +420,7 @@
         </div><div id="reportPages" class="report-pages"></div>`;
       document.body.appendChild(ov);
       ov.querySelector('#repClose').addEventListener('click', () => showOverlay(false));
-      ov.querySelector('#repPrint').addEventListener('click', () => window.print());
+      ov.querySelector('#repPrint').addEventListener('click', doPrint);
     }
     const closeTxt = window.I18N.lang === 'ar' ? 'إغلاق' : 'Close';
     const printTxt = window.I18N.lang === 'ar' ? 'طباعة / حفظ PDF' : 'Print / Save PDF';
