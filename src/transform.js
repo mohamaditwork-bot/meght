@@ -58,6 +58,11 @@ export function buildRecords(headers, rows, mapping, normalizationMaps = {}) {
     }
     // Derived
     rec.is_saudi = isSaudiNationality(rec.nationality);
+    // Contractor: an employee with a company/location value belongs to an
+    // external contracted company; empty = a direct/permanent employee.
+    const comp = rec.contractor == null ? '' : String(rec.contractor).trim();
+    rec.contractor = comp || null;
+    rec.is_contractor = !!comp;
     return rec;
   });
 

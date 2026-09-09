@@ -29,6 +29,7 @@
       n_movements: 'الترقيات والحركات', n_monthly: 'الحركة الشهرية', n_compare: 'المقارنة الشهرية',
       n_reports: 'مركز التقارير', n_rules: 'قواعد التوطين', n_jobmap: 'مطابقة المسميات',
       n_upload: 'رفع بيانات Excel', n_uploads: 'سجل رفع البيانات', n_audit: 'سجل التدقيق', n_users: 'المستخدمون والصلاحيات',
+      n_contractors: 'التزام الشركات المتعاقدة', contractor: 'الشركة المتعاقدة', direct_na: 'لا ينطبق – N/A',
     },
     en: {
       brand_sub: 'Human Resources', hr_dept: 'Human Resources Department',
@@ -52,6 +53,7 @@
       n_movements: 'Promotions & Movements', n_monthly: 'Monthly Movement', n_compare: 'Monthly Comparison',
       n_reports: 'Reports Center', n_rules: 'Localization Rules', n_jobmap: 'Job Mapping',
       n_upload: 'Upload Excel Data', n_uploads: 'Upload History', n_audit: 'Audit Log', n_users: 'Users & Permissions',
+      n_contractors: 'Contractor Compliance', contractor: 'Contractor Company', direct_na: 'N/A – Direct',
     },
   };
 

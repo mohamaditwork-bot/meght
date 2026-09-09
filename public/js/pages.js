@@ -446,7 +446,7 @@
  const search = async (q) => {
  const r = await api('/api/employees?q=' + encodeURIComponent(q) + (App.filters.period ? '&period=' + App.filters.period : ''));
  const emps = r.employees || [];
- el('empResults').innerHTML = `<div style="color:var(--muted);font-size:12px;margin-bottom:8px">${fmt.n(r.total)} نتيجة</div><table class="tbl clickable responsive-cards"><thead><tr><th>الرقم</th><th>الاسم العربي</th><th>الاسم الإنجليزي</th><th>القسم</th><th>المسمى</th><th>الجنسية</th><th>التصنيف</th></tr></thead><tbody>${emps.map((e) => `<tr data-code="${fmt.esc(e.employee_code)}"><td data-l="الرقم" class="num">${fmt.esc(e.employee_code)}</td><td data-l="الاسم">${fmt.esc(e.arabic_name)}</td><td data-l="EN">${fmt.esc(e.name)}</td><td data-l="القسم">${fmt.esc(e.section)}</td><td data-l="المسمى">${fmt.esc(e.position)}</td><td data-l="الجنسية">${fmt.esc(e.nationality)}</td><td data-l="التصنيف">${e.is_saudi ? '<span class="badge b-ok">سعودي</span>' : '<span class="badge b-muted">غير سعودي</span>'}</td></tr>`).join('')}</tbody></table>`;
+ el('empResults').innerHTML = `<div style="color:var(--muted);font-size:12px;margin-bottom:8px">${fmt.n(r.total)} نتيجة</div><table class="tbl clickable responsive-cards"><thead><tr><th>الرقم</th><th>الاسم العربي</th><th>الاسم الإنجليزي</th><th>القسم</th><th>المسمى</th><th>الجنسية</th><th>الشركة</th><th>التصنيف</th></tr></thead><tbody>${emps.map((e) => `<tr data-code="${fmt.esc(e.employee_code)}"><td data-l="الرقم" class="num">${fmt.esc(e.employee_code)}</td><td data-l="الاسم">${fmt.esc(e.arabic_name)}</td><td data-l="EN">${fmt.esc(e.name)}</td><td data-l="القسم">${fmt.esc(e.section)}</td><td data-l="المسمى">${fmt.esc(e.position)}</td><td data-l="الجنسية">${fmt.esc(e.nationality)}</td><td data-l="الشركة">${e.is_contractor ? `<span class="badge b-teal">${fmt.esc(e.contractor)}</span>` : '<span style="color:var(--muted);font-size:11px">لا ينطبق</span>'}</td><td data-l="التصنيف">${e.is_saudi ? '<span class="badge b-ok">سعودي</span>' : '<span class="badge b-muted">غير سعودي</span>'}</td></tr>`).join('')}</tbody></table>`;
  el('empResults').querySelectorAll('tr[data-code]').forEach((tr) => tr.addEventListener('click', () => location.hash = '#/employee/' + tr.dataset.code));
  };
  let t; el('empSearch').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => search(e.target.value.trim()), 200); });
@@ -470,6 +470,7 @@
  <div class="panel"><div class="panel-head"><h3>البيانات الأساسية</h3></div><div class="panel-body"><div class="info-grid">
  ${infoCell('المنشأة', e.division)}${infoCell('القسم', e.section)}${infoCell('المسمى', e.position)}${infoCell('الدرجة', e.level_code)}
  ${infoCell('الجنسية', e.nationality)}${infoCell('الجنس', e.gender)}
+ ${infoCell('الشركة المتعاقدة', e.is_contractor ? e.contractor : 'لا ينطبق – N/A')}
  ${r.canSalary ? infoCell('الراتب', fmt.moneyPlain(e.total_salary)) : ''}
  ${infoCell('تاريخ التعيين', fmt.date(e.hiring_date))}
  ${infoCell('رصيد الإجازة السنوية', fmt.days(e.end_annual_balance))}${infoCell('رصيد الـHoliday', fmt.days(e.end_holiday_balance))}

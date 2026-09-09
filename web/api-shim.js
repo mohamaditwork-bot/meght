@@ -9,6 +9,7 @@ import { validate } from '../src/validation.js';
 import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from '../src/analytics.js';
 import { compareSnapshots, movementSummary, buildTimeline } from '../src/movements.js';
 import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from '../src/expiry.js';
+import { buildContractorReport, docStatusReport } from '../src/contractor.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from '../src/localization.js';
 import { standardize, mappingRows } from '../src/jobmap.js';
 import { generateInsights, executiveSummary } from '../src/insights.js';
@@ -70,7 +71,8 @@ function prevOf(id) {
 function slim(r) {
   return { employee_code: r.employee_code, name: r.name, arabic_name: r.arabic_name, section: r.section,
     position: r.position, division: r.division, level_code: r.level_code, nationality: r.nationality,
-    gender: r.gender, is_saudi: r.is_saudi, end_annual_balance: r.end_annual_balance,
+    gender: r.gender, is_saudi: r.is_saudi, contractor: r.contractor, is_contractor: r.is_contractor,
+    end_annual_balance: r.end_annual_balance,
     end_holiday_balance: r.end_holiday_balance, hiring_date: r.hiring_date,
     contract_expire_date: r.contract_expire_date, residence_expire_date: r.residence_expire_date,
     health_card_expire_date: r.health_card_expire_date, passport_expire_date: r.passport_expire_date,
@@ -146,6 +148,7 @@ R['GET /api/salary'] = (q) => { const d = fq(q); const k = computeKPIs(d.records
     histogram: salaryHistogram(d.records) }); };
 R['GET /api/expiry'] = (q) => { const d = fq(q); return ok({ matrix: complianceMatrix(d.records, d.asOf), missing: missingDocuments(d.records, d.asOf), fields: EXPIRY_FIELDS }); };
 R['GET /api/alerts'] = (q) => { const d = fq(q); return ok({ alerts: buildAlerts(d.records, d.asOf) }); };
+R['GET /api/contractors'] = (q) => { const d = fq(q); return ok({ report: buildContractorReport(d.records, d.asOf), iqama: docStatusReport(d.records, 'residence_expire_date', d.asOf), health: docStatusReport(d.records, 'health_card_expire_date', d.asOf) }); };
 R['GET /api/employees'] = (q) => { const d = fq(q); const term = String(q.q || '').trim().toLowerCase(); let recs = d.records;
   if (term) recs = recs.filter((r) => String(r.employee_code ?? '').toLowerCase().includes(term) || String(r.name ?? '').toLowerCase().includes(term) || String(r.arabic_name ?? '').includes(q.q.trim()) || String(r.section ?? '').includes(q.q.trim()) || String(r.position ?? '').includes(q.q.trim()));
   return ok({ total: recs.length, employees: recs.slice(0, 300).map(slim) }); };

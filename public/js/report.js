@@ -41,6 +41,12 @@
     t_expiry: { ar: 'تقرير الانتهاء والامتثال', en: 'Expiry & Compliance Report' },
     t_directory: { ar: 'دليل الموظفين', en: 'Employee Directory' },
     t_hotels: { ar: 'تقرير مقارنة الفنادق', en: 'Hotel Comparison Report' },
+    t_contractors: { ar: 'تقرير التزام الشركات المتعاقدة', en: 'Contractor Compliance Report' },
+    s_contractors: { ar: 'ترتيب الشركات حسب الالتزام', en: 'Company ranking by compliance' },
+    c_company: { ar: 'الشركة', en: 'Company' }, c_compliance: { ar: 'نسبة الالتزام', en: 'Compliance %' },
+    c_iqok: { ar: 'إقامات سارية', en: 'Valid Iqamas' }, c_hcok: { ar: 'شهادات سارية', en: 'Valid Health' },
+    c_viol: { ar: 'مخالفات', en: 'Violations' }, c_rank: { ar: 'الترتيب', en: 'Rank' },
+    contractor: { ar: 'الشركة المتعاقدة', en: 'Contractor' },
     // KPIs / headers
     total_emp: { ar: 'إجمالي الموظفين', en: 'Total Employees' },
     saudis: { ar: 'الموظفون السعوديون', en: 'Saudi Employees' },
@@ -96,6 +102,7 @@
     { id: 'departments', icon: 'building', perm: 'view_departments', orient: 'landscape' },
     { id: 'hotels', icon: 'building', perm: 'view_workforce', orient: 'landscape' },
     { id: 'expiry', icon: 'clock', perm: 'view_expiry', orient: 'landscape' },
+    { id: 'contractors', icon: 'shield', perm: 'view_expiry', orient: 'landscape' },
     { id: 'directory', icon: 'search', perm: 'view_employees', orient: 'landscape' },
   ];
 
@@ -233,16 +240,44 @@
       return html;
     },
 
+    async contractors(ctx) {
+      const r = await api('/api/contractors' + ctx.qs);
+      const rep = r.report || {}; const k = rep.kpis || {};
+      const pc = (v) => (v == null ? '—' : Number(v).toFixed(1) + '%');
+      let html = section('s_summary', '1', `<div class="rep-kpis">
+        ${kpiCard(lang === 'ar' ? 'الالتزام الإجمالي' : 'Overall Compliance', pc(k.compliance_pct))}
+        ${kpiCard(lang === 'ar' ? 'صلاحية الإقامات' : 'Iqama Validity', pc(k.iqama_valid_pct))}
+        ${kpiCard(lang === 'ar' ? 'صلاحية الشهادات الصحية' : 'Health Validity', pc(k.health_valid_pct))}
+        ${kpiCard(lang === 'ar' ? 'موظفو الشركات' : 'Contractor Employees', nfmt(k.contractor_employees))}
+        ${kpiCard(lang === 'ar' ? 'الموظفون المباشرون' : 'Direct Employees', nfmt(k.direct_employees))}
+        ${kpiCard(lang === 'ar' ? 'إقامات منتهية' : 'Expired Iqamas', nfmt(k.expired_iqamas))}
+        ${kpiCard(lang === 'ar' ? 'شهادات صحية منتهية' : 'Expired Health', nfmt(k.expired_health))}
+        ${kpiCard(lang === 'ar' ? 'مستندات قريبة الانتهاء' : 'Docs near expiry', nfmt(k.near_docs))}
+      </div>`);
+      const rows = (rep.companies || []).map((c) => ({
+        rank: nfmt(c.rank), company: esc(c.company), total: nfmt(c.total),
+        iqok: `${nfmt(c.iqama.valid + c.iqama.near)} / ${nfmt(c.iqama.applicable)}`,
+        hcok: `${nfmt(c.health.valid + c.health.near)} / ${nfmt(c.health.applicable)}`,
+        viol: c.violations ? `<span class="rep-tag bad">${nfmt(c.violations)}</span>` : `<span class="rep-tag ok">0</span>`,
+        comp: c.compliance_pct == null ? '—' : `<span class="rep-tag ${c.compliance_pct >= 90 ? 'ok' : c.compliance_pct >= 70 ? 'warn' : 'bad'}">${pc(c.compliance_pct)}</span>`,
+      }));
+      html += section('s_contractors', '2', table(
+        [{ h: L('c_rank'), k: 'rank', num: 1, w: '7%' }, { h: L('c_company'), k: 'company', w: '30%' }, { h: L('c_total'), k: 'total', num: 1, w: '11%' }, { h: L('c_iqok'), k: 'iqok', num: 1, w: '15%' }, { h: L('c_hcok'), k: 'hcok', num: 1, w: '15%' }, { h: L('c_viol'), k: 'viol', num: 1, w: '10%' }, { h: L('c_compliance'), k: 'comp', num: 1, w: '12%' }],
+        rows));
+      return html;
+    },
+
     async directory(ctx) {
       const r = await api('/api/employees?q=' + (ctx.division ? '&division=' + encodeURIComponent(ctx.division) : '') + (A().filters.period ? '&period=' + A().filters.period : ''));
       const emps = (r.employees || []).slice(0, 800);
       const rows = emps.map((e) => ({
         code: esc(e.employee_code), name: esc(e.arabic_name || e.name), en: esc(e.name || ''),
         hotel: esc(e.division || ''), dept: esc(e.section || ''), pos: esc(e.position || ''),
+        comp: e.is_contractor ? esc(e.contractor) : (lang === 'ar' ? 'لا ينطبق' : 'N/A'),
         nat: esc(e.nationality || ''), cls: e.is_saudi ? `<span class="rep-tag ok">${lang === 'ar' ? 'سعودي' : 'Saudi'}</span>` : `<span class="rep-tag mut">${lang === 'ar' ? 'غير سعودي' : 'Non-Saudi'}</span>`,
       }));
       return section('s_directory', '1', table(
-        [{ h: L('c_code'), k: 'code', num: 1, w: '7%' }, { h: L('c_name'), k: 'name', w: '18%' }, { h: 'EN', k: 'en', w: '17%' }, { h: L('c_hotel'), k: 'hotel', w: '15%' }, { h: L('c_dept'), k: 'dept', w: '17%' }, { h: L('c_pos'), k: 'pos', w: '11%' }, { h: L('c_nat'), k: 'nat', w: '8%' }, { h: L('c_status'), k: 'cls', num: 1, w: '7%' }],
+        [{ h: L('c_code'), k: 'code', num: 1, w: '6%' }, { h: L('c_name'), k: 'name', w: '16%' }, { h: 'EN', k: 'en', w: '15%' }, { h: L('c_hotel'), k: 'hotel', w: '13%' }, { h: L('c_dept'), k: 'dept', w: '15%' }, { h: L('c_pos'), k: 'pos', w: '10%' }, { h: L('contractor'), k: 'comp', w: '13%' }, { h: L('c_nat'), k: 'nat', w: '7%' }, { h: L('c_status'), k: 'cls', num: 1, w: '5%' }],
         rows));
     },
   };
@@ -480,6 +515,94 @@
     if (rb) rb.addEventListener('click', () => window.Report.open('hotels', { lang: window.I18N.lang, orient: 'landscape', division: window.App.filters.division || '' }));
   };
 
+  // ---- Contractor Compliance page ----------------------------------------
+  window.Pages = window.Pages || {};
+  window.Pages.contractors = async function (content) {
+    const il = window.I18N.lang, ar = il === 'ar', t = (k) => window.I18N.t(k);
+    if (!window.App.state || !window.App.state.hasData) {
+      content.innerHTML = `<div class="page-head"><div><h2>${t('n_contractors')}</h2></div></div><div class="empty"><h3>${ar ? 'لا توجد بيانات' : 'No data'}</h3></div>`;
+      return;
+    }
+    content.innerHTML = '<div class="spinner"></div>';
+    const r = await window.App.api('/api/contractors' + window.App.qs());
+    const rep = r.report || {}; const k = rep.kpis || {};
+    const iqamaRep = r.iqama || {}; const healthRep = r.health || {};
+    const esc = fmt.esc;
+    const pc = (v) => (v == null ? '—' : Number(v).toFixed(1) + '%');
+    const complChip = (v) => { if (v == null) return '<span class="badge b-muted">—</span>'; const cls = v >= 90 ? 'b-ok' : v >= 70 ? 'b-warn' : 'b-danger'; return `<span class="badge ${cls}">${v.toFixed(1)}%</span>`; };
+    const L = { ar: { title: 'التزام الشركات المتعاقدة', sub: 'لوحة رقابية: صلاحية الإقامات والشهادات الصحية لكل شركة توريد، مع نسبة الالتزام والترتيب.',
+        contractorEmp: 'موظفو الشركات المتعاقدة', directEmp: 'الموظفون المباشرون', companies: 'الشركات المتعاقدة',
+        iqamaValid: 'صلاحية الإقامات', healthValid: 'صلاحية الشهادات الصحية', compliance: 'الالتزام الإجمالي',
+        expiredIq: 'إقامات منتهية', expiredHc: 'شهادات صحية منتهية', nearDocs: 'مستندات قريبة الانتهاء',
+        topCo: 'أعلى شركة التزاماً', leastCo: 'أقل شركة التزاماً', ranking: 'ترتيب الشركات حسب الالتزام',
+        company: 'الشركة', emp: 'الموظفون', iqOk: 'إقامات سارية', hcOk: 'شهادات سارية', viol: 'مخالفات (منتهية/ناقصة)', complpct: 'نسبة الالتزام', rank: 'الترتيب' },
+      en: { title: 'Contractor Compliance', sub: 'Control panel: Iqama & Health-card validity per labor-supply company, with compliance % and ranking.',
+        contractorEmp: 'Contractor Employees', directEmp: 'Direct Employees', companies: 'Contractor Companies',
+        iqamaValid: 'Iqama Validity', healthValid: 'Health-card Validity', compliance: 'Overall Compliance',
+        expiredIq: 'Expired Iqamas', expiredHc: 'Expired Health Cards', nearDocs: 'Docs near expiry',
+        topCo: 'Most compliant', leastCo: 'Least compliant', ranking: 'Company ranking by compliance',
+        company: 'Company', emp: 'Employees', iqOk: 'Valid Iqamas', hcOk: 'Valid Health', viol: 'Violations (expired/missing)', complpct: 'Compliance %', rank: 'Rank' } }[il];
+    const kpi = (label, val, sub, accent) => `<div class="kpi ${accent ? 'accent-' + accent : ''}"><div class="k-top"><span class="k-label">${esc(label)}</span></div><div class="k-val">${val}</div>${sub ? `<div class="k-sub">${esc(sub)}</div>` : ''}</div>`;
+    // Iqama / Health status distribution (expired / near / valid / [N-A]) with %.
+    // Scoped to CONTRACTOR employees so it matches the KPI cards above.
+    const stState = { expired: ['b-danger', ar ? 'منتهية' : 'Expired'], near: ['b-warn', ar ? 'قريبة الانتهاء' : 'Near expiry'], valid: ['b-ok', ar ? 'سارية' : 'Valid'], missing: ['b-danger', ar ? 'ناقصة' : 'Missing'], na: ['b-muted', ar ? 'لا ينطبق' : 'N/A'] };
+    function statusStrip(bucket, keys) {
+      const o = bucket || {}; const appl = o.applicable || 0;
+      const cell = (key) => { const n = o[key] || 0; const p = appl ? (key === 'na' ? null : (n / appl * 100)) : null; return `<div style="flex:1;min-width:90px;text-align:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)"><div><span class="badge ${stState[key][0]}">${stState[key][1]}</span></div><div style="font-size:22px;font-weight:800;margin-top:6px">${fmt.n(n)}</div><div style="font-size:11px;color:var(--muted)">${p == null ? '—' : p.toFixed(1) + '%'}</div></div>`; };
+      return `<div style="display:flex;gap:10px;flex-wrap:wrap">${keys.map(cell).join('')}</div>`;
+    }
+    function topExpired(type) {
+      const list = (rep.companies || []).map((c) => ({ company: c.company, x: (c[type].expired || 0) + (c[type].missing || 0) })).filter((c) => c.x > 0).sort((a, b) => b.x - a.x).slice(0, 5);
+      if (!list.length) return `<div style="font-size:12px;color:var(--muted);margin-top:8px">${ar ? 'لا توجد مستندات منتهية 👍' : 'No expired documents 👍'}</div>`;
+      return `<div style="margin-top:10px"><div style="font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:5px">${ar ? 'أكثر الشركات تعرضاً (منتهية/ناقصة)' : 'Highest-risk companies (expired/missing)'}</div>${list.map((c) => `<div style="display:flex;justify-content:space-between;padding:5px 8px;border-bottom:1px solid var(--line-2);font-size:12.5px"><span>${esc(c.company)}</span><span class="badge b-danger">${fmt.n(c.x)}</span></div>`).join('')}</div>`;
+    }
+    const ov = rep.overall || {};
+    const statusPanels = () => `<div class="grid g-2" style="margin-bottom:16px">
+      <div class="panel"><div class="panel-head"><h3>${ar ? 'حالة إقامات موظفي الشركات' : 'Contractor Iqama status'}</h3><span class="p-sub">${ar ? 'للأجانب فقط' : 'non-Saudis only'}</span></div><div class="panel-body">${statusStrip(ov.iqama, ['expired', 'near', 'valid', 'missing'])}${topExpired('iqama')}</div></div>
+      <div class="panel"><div class="panel-head"><h3>${ar ? 'حالة الشهادات الصحية' : 'Contractor Health-card status'}</h3><span class="p-sub">${ar ? 'مهن التغذية فقط' : 'food roles only'}</span></div><div class="panel-body">${statusStrip(ov.health, ['expired', 'near', 'valid', 'missing', 'na'])}${topExpired('health')}</div></div>
+    </div>`;
+    const rows = (rep.companies || []);
+    content.innerHTML = `<div class="page-head"><div><h2>${L.title}</h2><div class="sub">${L.sub}</div></div>
+      <div class="ph-actions no-print"><button class="btn" id="cReport">${window.icon ? window.icon('printer') : ''} ${t('preview_print')}</button></div></div>
+      <div class="kpi-grid">
+        ${kpi(L.compliance, pc(k.compliance_pct), '', k.compliance_pct >= 90 ? 'green' : k.compliance_pct >= 70 ? 'amber' : 'red')}
+        ${kpi(L.iqamaValid, pc(k.iqama_valid_pct))}
+        ${kpi(L.healthValid, pc(k.health_valid_pct))}
+        ${kpi(L.contractorEmp, fmt.n(k.contractor_employees))}
+        ${kpi(L.directEmp, fmt.n(k.direct_employees))}
+        ${kpi(L.companies, fmt.n(rep.company_count))}
+        ${kpi(L.expiredIq, fmt.n(k.expired_iqamas), '', k.expired_iqamas ? 'red' : '')}
+        ${kpi(L.expiredHc, fmt.n(k.expired_health), '', k.expired_health ? 'red' : '')}
+        ${kpi(L.nearDocs, fmt.n(k.near_docs), '', k.near_docs ? 'amber' : '')}
+        ${kpi(L.topCo, k.top_company ? pc(k.top_company.pct) : '—', k.top_company ? k.top_company.company : '')}
+        ${kpi(L.leastCo, k.least_company ? pc(k.least_company.pct) : '—', k.least_company ? k.least_company.company : '')}
+      </div>
+      ${statusPanels()}
+      <div class="grid g-2" style="margin-bottom:16px">
+        <div class="panel"><div class="panel-head"><h3>${L.ranking}</h3></div><div class="panel-body"><div id="chCompl" class="chart"></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>${ar ? 'الإقامات والشهادات لكل شركة' : 'Iqama & Health by company'}</h3></div><div class="panel-body"><div id="chDocs" class="chart"></div></div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><h3>${L.ranking}</h3></div><div class="panel-body tbl-wrap">
+        <table class="tbl"><thead><tr><th>${L.rank}</th><th>${L.company}</th><th>${L.emp}</th><th>${L.iqOk}</th><th>${L.hcOk}</th><th>${L.viol}</th><th>${L.complpct}</th></tr></thead><tbody>
+        ${rows.map((c) => `<tr><td class="num">${c.rank}</td><td><b>${esc(c.company)}</b></td><td class="num">${fmt.n(c.total)}</td>
+          <td class="num">${fmt.n(c.iqama.valid + c.iqama.near)} / ${fmt.n(c.iqama.applicable)}</td>
+          <td class="num">${fmt.n(c.health.valid + c.health.near)} / ${fmt.n(c.health.applicable)}</td>
+          <td class="num">${c.violations ? `<span class="badge b-danger">${fmt.n(c.violations)}</span>` : '<span class="badge b-ok">0</span>'}</td>
+          <td class="num">${complChip(c.compliance_pct)}</td></tr>`).join('')}
+        </tbody></table></div></div>`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!window.Chart) return;
+      const cats = rows.map((c) => c.company);
+      Chart.barH(document.getElementById('chCompl'), cats, rows.map((c) => +(c.compliance_pct || 0).toFixed(1)), { labelWidth: 150, suffix: '%', showLabel: true });
+      Chart.stacked(document.getElementById('chDocs'), cats, [
+        { name: ar ? 'سارية' : 'Valid', data: rows.map((c) => c.iqama.valid + c.iqama.near + c.health.valid + c.health.near), color: '#1E883F' },
+        { name: ar ? 'منتهية/ناقصة' : 'Expired/Missing', data: rows.map((c) => c.iqama.expired + c.iqama.missing + c.health.expired + c.health.missing), color: '#C0392B' },
+      ], { horizontal: true, labelWidth: 150 });
+    }));
+    const rb = document.getElementById('cReport');
+    if (rb) rb.addEventListener('click', () => window.Report.open('contractors', { lang: window.I18N.lang, orient: 'landscape', division: window.App.filters.division || '' }));
+  };
+
   // ---- Job Mapping admin page --------------------------------------------
   window.Pages.jobmap = async function (content) {
     const il = window.I18N.lang, ar = il === 'ar', t = (k) => window.I18N.t(k);
@@ -518,6 +641,7 @@
     departments: { ar: 'إحصاءات الأقسام: الأعداد والسعودة والمسميات.', en: 'Department stats: counts, Saudization and titles.' },
     hotels: { ar: 'مقارنة الفنادق جنباً إلى جنب.', en: 'Side-by-side hotel comparison.' },
     expiry: { ar: 'تنبيهات الوثائق المنتهية/القريبة والوثائق الناقصة.', en: 'Expired/expiring document alerts and missing documents.' },
+    contractors: { ar: 'التزام الشركات المتعاقدة: صلاحية الإقامات والشهادات الصحية والترتيب.', en: 'Contractor compliance: Iqama/Health validity and ranking.' },
     directory: { ar: 'دليل الموظفين الكامل بالفندق والقسم والمسمى.', en: 'Full employee directory by hotel, department and title.' },
   };
   const cardIcon = (n) => (window.icon ? window.icon(n) : '');

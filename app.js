@@ -15,6 +15,7 @@ import { compareSnapshots, movementSummary, buildTimeline } from './src/movement
 import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from './src/expiry.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from './src/localization.js';
 import { standardize, mappingRows } from './src/jobmap.js';
+import { buildContractorReport, docStatusReport } from './src/contractor.js';
 import { generateInsights, executiveSummary } from './src/insights.js';
 import * as store from './src/store.js';
 import * as auth from './src/auth.js';
@@ -265,6 +266,16 @@ app.get('/api/alerts', requirePerm('view_expiry'), (req, res) => {
   res.json({ alerts: buildAlerts(ds.records, ds.asOf) });
 });
 
+// Contractor compliance dashboard (per-company Iqama/Health validity + ranking).
+app.get('/api/contractors', requirePerm('view_expiry'), (req, res) => {
+  const ds = filtered(req); if (!ds) return res.json({ empty: true });
+  res.json({
+    report: buildContractorReport(ds.records, ds.asOf),
+    iqama: docStatusReport(ds.records, 'residence_expire_date', ds.asOf),
+    health: docStatusReport(ds.records, 'health_card_expire_date', ds.asOf),
+  });
+});
+
 // ---- Employees -----------------------------------------------------------
 app.get('/api/employees', requirePerm('view_employees'), (req, res) => {
   const ds = filtered(req); if (!ds) return res.json({ empty: true });
@@ -303,6 +314,7 @@ function slimEmployee(r) {
   return { employee_code: r.employee_code, name: r.name, arabic_name: r.arabic_name,
     section: r.section, position: r.position, division: r.division, level_code: r.level_code,
     nationality: r.nationality, gender: r.gender, is_saudi: r.is_saudi,
+    contractor: r.contractor, is_contractor: r.is_contractor,
     end_annual_balance: r.end_annual_balance, end_holiday_balance: r.end_holiday_balance,
     hiring_date: r.hiring_date, contract_expire_date: r.contract_expire_date,
     residence_expire_date: r.residence_expire_date, health_card_expire_date: r.health_card_expire_date,

@@ -116,6 +116,15 @@ export const CORE_FIELDS = [
     aliases: ['passport expire date', 'passport expiry date', 'passport expiry',
       'تاريخ انتهاء الجواز', 'انتهاء جواز السفر', 'الجواز'],
   },
+  {
+    // Contractor / labor-supply company. When present the employee belongs to an
+    // external contracted company; when empty the employee is a DIRECT employee.
+    key: 'contractor', label: 'Location Arabic Name', labelAr: 'الشركة المتعاقدة / الموقع',
+    type: FIELD_TYPES.STRING,
+    aliases: ['location arabic name', 'location', 'site', 'site code', 'company', 'company name',
+      'contractor', 'contractor name', 'كود الموقع', 'اسم الشركة', 'الشركة', 'الموقع',
+      'الشركة المتعاقدة', 'اسم الموقع', 'المقاول', 'شركة التوريد'],
+  },
 ];
 
 export const CORE_KEYS = CORE_FIELDS.map((f) => f.key);

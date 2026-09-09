@@ -85,6 +85,7 @@
  { id: 'leave', key: 'n_leave', perm: 'view_leave', ico: 'sun' },
  { id: 'salary', key: 'n_salary', perm: 'view_salary', ico: 'wallet' },
  { id: 'expiry', key: 'n_expiry', perm: 'view_expiry', ico: 'clock' },
+ { id: 'contractors', key: 'n_contractors', perm: 'view_expiry', ico: 'shield' },
  ]},
  { gkey: 'nav_data', items: [
  { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale' },
@@ -118,7 +119,7 @@
  }
 
  // ---------- Filters ----------
- const FILTER_PAGES = new Set(['dashboard', 'workforce', 'saudization', 'nationality', 'departments', 'jobtitles', 'hotels', 'leave', 'salary', 'expiry', 'insights']);
+ const FILTER_PAGES = new Set(['dashboard', 'workforce', 'saudization', 'nationality', 'departments', 'jobtitles', 'hotels', 'leave', 'salary', 'expiry', 'contractors', 'insights']);
  function renderFilters() {
  const bar = $('#filterbar');
  if (!App.state || !App.state.hasData || !FILTER_PAGES.has(App.currentRoute)) { bar.classList.add('hide'); renderActiveFilters(); return; }
