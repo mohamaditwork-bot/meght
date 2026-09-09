@@ -1,20 +1,20 @@
 {
   "snapshots": [
     {
-      "id": "6e1fb625-dc79-4931-b3b8-31cd90eafb20",
+      "id": "a3a1f18c-e152-488c-b78f-b406e7e38800",
       "period": "2026-09",
       "periodLabel": "سبتمبر 2026",
-      "asOf": "2026-09-08",
-      "fileName": "HR_MultiHotel.xlsx",
-      "uploadedAt": "2026-09-09T07:10:04.259Z",
-      "committedAt": "2026-09-09T07:10:04.259Z",
+      "asOf": "2026-09-09",
+      "fileName": "HR_Current.xlsx",
+      "uploadedAt": "2026-09-09T14:28:34.994Z",
+      "committedAt": "2026-09-09T14:28:34.994Z",
       "uploadedBy": "admin",
-      "employeeCount": 46,
-      "saudiPct": 82.6086956521739,
-      "payroll": 213526,
+      "employeeCount": 96,
+      "saudiPct": 39.58333333333333,
+      "payroll": 353526,
       "qualityScore": 100,
       "status": "committed"
     }
   ],
-  "activeSnapshotId": "6e1fb625-dc79-4931-b3b8-31cd90eafb20"
+  "activeSnapshotId": "a3a1f18c-e152-488c-b78f-b406e7e38800"
 }
