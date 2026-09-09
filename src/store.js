@@ -3,14 +3,31 @@
 // normalization maps, localization rules and pending items live in JSON files.
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Data dir is configurable so the app can run on a writable path in serverless
-// environments (e.g. Netlify functions -> /tmp). Defaults to ./data locally.
-const ROOT = process.env.HR_DATA_DIR || path.join(__dirname, '..', 'data');
 const SEED_DIR = path.join(__dirname, '..', 'data', 'seed');
+
+// Data dir resolution. On serverless hosts (Netlify/Vercel) the app bundle is
+// READ-ONLY except the OS temp dir, so a write to ./data throws — which used to
+// surface as a false "wrong passcode" at login. We therefore pick a WRITABLE
+// directory automatically: the configured HR_DATA_DIR, else ./data, and if that
+// is not writable we fall back to <tmp>/maysan-hr-data. No env var is required
+// for login to work after deployment.
+function pickWritableRoot() {
+  const candidates = [process.env.HR_DATA_DIR, path.join(__dirname, '..', 'data'), path.join(os.tmpdir(), 'maysan-hr-data')].filter(Boolean);
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch { /* try next */ }
+  }
+  return path.join(os.tmpdir(), 'maysan-hr-data');
+}
+const ROOT = pickWritableRoot();
 const SNAP_DIR = path.join(ROOT, 'snapshots');
 const UP_DIR = path.join(ROOT, 'uploads');
 
@@ -39,9 +56,17 @@ function readJSON(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
 }
 function writeJSON(file, data) {
-  const tmp = file + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-  fs.renameSync(tmp, file);
+  // Never throw on a read-only filesystem: persistence is best-effort so that
+  // auth/login and read paths keep working even where writes are disallowed.
+  try {
+    const tmp = file + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+    fs.renameSync(tmp, file);
+    return true;
+  } catch (e) {
+    try { console.warn('[store] write failed (read-only FS?):', file, e.message); } catch {}
+    return false;
+  }
 }
 
 const F = {

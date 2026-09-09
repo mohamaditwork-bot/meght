@@ -44,7 +44,7 @@ function filterOptions(records) {
 
 const DEMO_PASSCODE = '056023';
 const ADMIN = {
-  id: 'admin', username: 'admin', name: 'System Administrator', role: 'admin',
+  id: 'admin', username: 'mohamad.hr', name: 'مدير الموارد البشرية', role: 'admin',
   roleLabel: 'Admin — مدير النظام',
   permissions: ['view_dashboard', 'view_workforce', 'view_saudization', 'view_nationality',
     'view_departments', 'view_jobtitles', 'view_leave', 'view_expiry', 'view_employees',

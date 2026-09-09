@@ -82,9 +82,6 @@
  ]},
  { gkey: 'nav_compliance', items: [
  { id: 'employees', key: 'n_employees', perm: 'view_employees', ico: 'search' },
- { id: 'movements', key: 'n_movements', perm: 'view_movements', ico: 'trending-up' },
- { id: 'monthly', key: 'n_monthly', perm: 'view_movements', ico: 'repeat' },
- { id: 'compare', key: 'n_compare', perm: 'view_comparison', ico: 'scale' },
  { id: 'leave', key: 'n_leave', perm: 'view_leave', ico: 'sun' },
  { id: 'salary', key: 'n_salary', perm: 'view_salary', ico: 'wallet' },
  { id: 'expiry', key: 'n_expiry', perm: 'view_expiry', ico: 'clock' },

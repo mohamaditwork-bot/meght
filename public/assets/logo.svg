@@ -1,24 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 300" role="img" aria-label="MAYSAN INT. GROUP">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 300" role="img" aria-label="MAYSAN INT. GROUP" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <linearGradient id="mgM" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0B4D2E"/>
-      <stop offset=".55" stop-color="#137a45"/>
+    <linearGradient id="mgM" x1="0" y1="0" x2="1" y2="0.85">
+      <stop offset="0" stop-color="#0C4C46"/>
+      <stop offset=".5" stop-color="#12703F"/>
       <stop offset="1" stop-color="#1E9E48"/>
     </linearGradient>
-    <linearGradient id="mgG" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#16a34a"/>
-      <stop offset="1" stop-color="#22c55e"/>
+    <linearGradient id="mgG" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#2FB457"/>
+      <stop offset="1" stop-color="#159141"/>
     </linearGradient>
   </defs>
-  <!-- Serif MG monogram: M teal->green, G bright green -->
-  <g font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="330" text-anchor="middle">
-    <text x="205" y="240" fill="url(#mgM)">M</text>
-    <text x="470" y="240" fill="url(#mgG)">G</text>
+  <!-- Interlocked serif MG monogram: M teal->green, G bright green -->
+  <g font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="340" text-anchor="middle">
+    <text x="225" y="242" fill="url(#mgM)">M</text>
+    <text x="452" y="242" fill="url(#mgG)">G</text>
   </g>
-  <!-- Wordmark across the centre -->
-  <g font-family="'Tajawal','Segoe UI',Arial,sans-serif" font-weight="800" font-size="33" letter-spacing="7" text-anchor="middle">
-    <text x="200" y="150" fill="#12726e">MAYSAN</text>
-    <text x="356" y="150" fill="#0B4D2E">INT.</text>
-    <text x="486" y="150" fill="#1E9E48">GROUP</text>
+  <!-- Wordmark centred across the middle -->
+  <g font-family="'Tajawal','Segoe UI',Arial,sans-serif" font-weight="800" font-size="34" letter-spacing="8" text-anchor="middle">
+    <text x="205" y="150" fill="#0C4C46">MAYSAN</text>
+    <text x="367" y="150" fill="#0C4C46">INT.</text>
+    <text x="505" y="150" fill="#1E9E48">GROUP</text>
   </g>
 </svg>

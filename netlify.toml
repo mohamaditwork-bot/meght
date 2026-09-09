@@ -7,6 +7,13 @@
   functions = "netlify/functions"
   command = "echo 'no build step'"
 
+[build.environment]
+  NODE_VERSION = "18"
+  # Serverless functions can only write to the OS temp dir. Point runtime data
+  # there so auth/upload persistence works after deploy (login also has an
+  # in-memory bootstrap so it works even if this is unset or read-only).
+  HR_DATA_DIR = "/tmp/maysan-hr-data"
+
 [functions]
   node_bundler = "esbuild"
   # Ship the demo seed so dashboards/movements show data on the live link.
