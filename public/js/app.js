@@ -92,6 +92,7 @@
  { id: 'upload', key: 'n_upload', perm: 'upload_data', ico: 'arrow-up' },
  { id: 'history', key: 'n_uploads', perm: 'view_dashboard', ico: 'layers' },
  { id: 'audit', key: 'n_audit', perm: 'view_audit', ico: 'shield' },
+ { id: 'users', key: 'n_users', perm: 'manage_users', ico: 'user' },
  ]},
  ];
  const T = (k) => (window.I18N ? window.I18N.t(k) : k);
