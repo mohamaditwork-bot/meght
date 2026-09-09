@@ -10,7 +10,16 @@
  window.App = App;
 
  // ---------- API ----------
+ // Transport is pluggable: the standalone (browser-only) build exposes
+ // window.clientApi, which runs the same backend in-page; otherwise we hit the
+ // real Express server over fetch. Both return the same shapes.
  async function api(path, opts = {}) {
+ if (window.clientApi) {
+ const r = await window.clientApi(path, opts);
+ if (r.status === 401) { showLogin(); throw new Error('unauthenticated'); }
+ if (r.status >= 400) throw Object.assign(new Error((r.body && r.body.error) || 'error'), { status: r.status, body: r.body });
+ return r.body;
+ }
  const res = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' }, opts));
  if (res.status === 401) { showLogin(); throw new Error('unauthenticated'); }
  const ct = res.headers.get('content-type') || '';
