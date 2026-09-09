@@ -307,14 +307,25 @@ table.tbl.clickable tr{cursor:pointer}
   .g-3,.g-4{grid-template-columns:repeat(2,1fr)} .col-span-2{grid-column:span 2}
 }
 @media(max-width:860px){
-  .sidebar{transform:translateX(100%);transition:.25s;width:min(290px,86vw)}
-  .sidebar.open{transform:none}
+  /* A position:fixed off-canvas sidebar is NOT clipped by body overflow, so
+     when closed it must not render a box at all — otherwise it extends the
+     horizontal scroll region on mobile. Shown as a sliding drawer when open. */
+  html,body{overflow-x:hidden}
+  .sidebar{display:none;transition:.25s;width:min(290px,86vw)}
+  .sidebar.open{display:flex;transform:none;animation:drawerIn .25s ease}
+  @keyframes drawerIn{from{transform:translateX(100%)}to{transform:none}}
   .menu-btn{display:block}
   .main{margin-inline-start:0}
   .g-2,.g-3,.g-4{grid-template-columns:1fr} .col-span-2{grid-column:span 1}
   .content{padding:16px}
   .search-box{max-width:none}
   .user-chip .u-name,.user-chip .u-role{display:none}
+  /* keep the topbar controls inside a phone screen: trim to essentials */
+  .topbar{gap:8px;padding:0 12px}
+  .topbar-actions{gap:6px;min-width:0;flex-shrink:1}
+  #qualityChip{display:none}
+  .period-chip #periodLabel{display:none}
+  .tb-toggle button{padding:7px 8px}
   .sidebar-backdrop{position:fixed;inset:0;background:rgba(10,30,32,.5);z-index:35}
   .filterbar{top:var(--topbar-h)}
   /* Tables to cards */
