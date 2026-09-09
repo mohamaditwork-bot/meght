@@ -465,6 +465,35 @@
     if (rb) rb.addEventListener('click', () => window.Report.open('hotels', { lang: window.I18N.lang, orient: 'landscape', division: window.App.filters.division || '' }));
   };
 
+  // ---- Job Mapping admin page --------------------------------------------
+  window.Pages.jobmap = async function (content) {
+    const il = window.I18N.lang, ar = il === 'ar', t = (k) => window.I18N.t(k);
+    const canManage = window.can('manage_localization_rules');
+    const r = await window.App.api('/api/jobmap');
+    const rows = r.rows || [];
+    const stdTitles = r.standardTitles || [];
+    content.innerHTML = `<div class="page-head"><div><h2>${t('n_jobmap')}</h2>
+        <div class="sub">${ar ? 'وحّد صيغ المسمى الوظيفي المختلفة (موظف استقبال / استقبال / Front Desk) إلى مسمى معياري واحد يُستخدم في حساب التوطين.' : 'Unify job-title variants (Receptionist / Front Desk / موظف استقبال) into one standardized title used for localization.'}</div></div>
+      ${canManage ? `<div class="ph-actions no-print"><button class="btn btn-primary" id="jmSave">${ar ? 'حفظ التعيينات' : 'Save mappings'}</button></div>` : ''}</div>
+      <div class="data-note">${ar ? 'المسمى المعياري يُطابَق مع «المهن المشمولة» في قرارات التوطين. اترك الحقل فارغاً ليُستخدم المسمى كما هو.' : 'The standardized title is matched against the occupations in localization rules. Leave blank to use the title as-is.'}</div>
+      <datalist id="stdList">${stdTitles.map((s) => `<option value="${fmt.esc(s)}">`).join('')}</datalist>
+      <div class="panel"><div class="panel-body tbl-wrap"><table class="tbl"><thead><tr>
+        <th>${ar ? 'المسمى في البيانات' : 'Title in data'}</th><th>${ar ? 'المسمى المعياري' : 'Standardized title'}</th><th>${ar ? 'الحالة' : 'Status'}</th></tr></thead><tbody>
+        ${rows.map((row) => `<tr><td><b>${fmt.esc(row.position)}</b></td>
+          <td>${canManage ? `<input class="field" style="margin:0" list="stdList" data-key="${fmt.esc(row.key)}" value="${fmt.esc(row.standardized)}" placeholder="${fmt.esc(row.position)}">` : fmt.esc(row.standardized || row.position)}</td>
+          <td><span class="badge ${row.mapped ? 'b-ok' : 'b-muted'}">${row.mapped ? (ar ? 'مُعيَّن' : 'Mapped') : (ar ? 'كما هو' : 'As-is')}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`;
+    if (canManage) {
+      const btn = document.getElementById('jmSave');
+      btn && btn.addEventListener('click', async () => {
+        const map = {};
+        content.querySelectorAll('input[data-key]').forEach((inp) => { const v = inp.value.trim(); if (v) map[inp.dataset.key] = v; });
+        await window.App.api('/api/jobmap', { method: 'PUT', body: JSON.stringify({ map }) });
+        window.toast(ar ? 'تم حفظ التعيينات' : 'Mappings saved', 'ok');
+      });
+    }
+  };
+
   // ---- Reports Center page (registered on window.Pages) -------------------
   const DESC = {
     executive: { ar: 'ملخص تنفيذي شامل بالمؤشرات الرئيسية والتوزيع والسعودة — للإدارة العليا.', en: 'Board-level summary: key KPIs, composition and Saudization.' },

@@ -14,6 +14,7 @@ import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from '
 import { compareSnapshots, movementSummary, buildTimeline } from './src/movements.js';
 import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from './src/expiry.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from './src/localization.js';
+import { standardize, mappingRows } from './src/jobmap.js';
 import { generateInsights, executiveSummary } from './src/insights.js';
 import * as store from './src/store.js';
 import * as auth from './src/auth.js';
@@ -130,12 +131,16 @@ app.get('/api/workforce', requirePerm('view_workforce'), (req, res) => {
 app.get('/api/saudization', requirePerm('view_saudization'), (req, res) => {
   const ds = filtered(req); if (!ds) return res.json({ empty: true });
   const rules = store.getRules();
+  const jobmap = store.getJobMap();
   const overall = overallInternalRatio(ds.records);
   const build = (key) => internalRatios(ds.records, key);
-  // Gap analysis only where a verified official rule applies (by position).
+  // Gap analysis only where a verified official rule applies. The employee's
+  // position is first standardized via the Job Mapping table, so title variants
+  // ("موظف استقبال" / "استقبال" / "Front Desk") resolve to one rule.
   const positions = build('position').map((g) => {
-    const rule = ruleForPosition(rules, g.key);
-    return gapAnalysis({ key: g.key, total: g.total, saudi: g.saudi }, rule ? rule.required_pct : null);
+    const std = standardize(g.key, jobmap);
+    const rule = ruleForPosition(rules, std);
+    return { ...gapAnalysis({ key: g.key, total: g.total, saudi: g.saudi }, rule ? rule.required_pct : null), standardized: std, rule_name: rule ? rule.name : null };
   });
   res.json({
     overall, bySection: build('section'), byPosition: positions,
@@ -425,6 +430,21 @@ app.delete('/api/rules/:id', requirePerm('manage_localization_rules'), (req, res
   store.saveRules(rules);
   store.appendAudit({ action: 'rule_deleted', actor: req.session.user.username, detail: req.params.id });
   res.json({ ok: true });
+});
+
+// ---- Job title mapping ---------------------------------------------------
+app.get('/api/jobmap', requireAuth, (req, res) => {
+  const map = store.getJobMap();
+  const active = store.getActiveSnapshot();
+  const positions = active ? active.data.records.map((r) => r.position).filter(Boolean) : [];
+  res.json({ map, rows: mappingRows(positions, map), standardTitles: [...new Set(Object.values(map).filter(Boolean))] });
+});
+app.put('/api/jobmap', requirePerm('manage_localization_rules'), (req, res) => {
+  const map = req.body && req.body.map;
+  if (!map || typeof map !== 'object') return res.status(400).json({ error: 'invalid_map' });
+  store.saveJobMap(map);
+  store.appendAudit({ action: 'jobmap_updated', actor: req.session.user.username, detail: `${Object.keys(map).length} تعيين` });
+  res.json({ ok: true, map });
 });
 
 // ---- Users ---------------------------------------------------------------

@@ -52,6 +52,7 @@ const F = {
   pending: path.join(ROOT, 'pending-uploads.json'),
   classifications: path.join(ROOT, 'movement-classifications.json'),
   leavers: path.join(ROOT, 'leaver-reasons.json'),
+  jobmap: path.join(ROOT, 'job-map.json'),
 };
 
 // ---- Snapshots -----------------------------------------------------------
@@ -121,6 +122,10 @@ export function getAudit(limit = 500) {
 // ---- Localization rules --------------------------------------------------
 export function getRules() { return readJSON(F.rules, []); }
 export function saveRules(r) { writeJSON(F.rules, r); }
+
+// ---- Job title mapping (variant -> standardized) -------------------------
+export function getJobMap() { return readJSON(F.jobmap, {}); }
+export function saveJobMap(m) { writeJSON(F.jobmap, m); }
 
 // ---- Movement classifications (HR overrides) -----------------------------
 export function getClassifications() { return readJSON(F.classifications, {}); }

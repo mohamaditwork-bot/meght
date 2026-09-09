@@ -91,6 +91,7 @@
  ]},
  { gkey: 'nav_data', items: [
  { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale' },
+ { id: 'jobmap', key: 'n_jobmap', perm: 'view_saudization', ico: 'briefcase' },
  { id: 'upload', key: 'n_upload', perm: 'upload_data', ico: 'arrow-up' },
  { id: 'history', key: 'n_uploads', perm: 'view_dashboard', ico: 'layers' },
  { id: 'audit', key: 'n_audit', perm: 'view_audit', ico: 'shield' },

@@ -49,6 +49,8 @@ fs.writeFileSync(path.join(root, 'data', 'seed', 'meta.json'), JSON.stringify(me
 // Regenerate the standalone embedded dataset.
 const rulesPath = path.join(root, 'data', 'seed', 'localization-rules.json');
 const rules = fs.existsSync(rulesPath) ? JSON.parse(fs.readFileSync(rulesPath, 'utf8')) : [];
+const jobmapPath = path.join(root, 'data', 'seed', 'job-map.json');
+const jobmap = fs.existsSync(jobmapPath) ? JSON.parse(fs.readFileSync(jobmapPath, 'utf8')) : {};
 const SNAPSHOTS = { [id]: { records, asOf, quality: validation.quality, meta: {
   id, period, periodLabel, asOf, fileName, uploadedAt: meta.snapshots[0].uploadedAt,
   uploadedBy: 'admin', employeeCount: records.length, saudiPct: kpis.saudi_pct,
@@ -58,7 +60,8 @@ const META = { snapshots: [SNAPSHOTS[id].meta], activeSnapshotId: id };
 const embed = `// Auto-generated embedded data from the real HR Excel file.\n`
   + `export const SNAPSHOTS = ${JSON.stringify(SNAPSHOTS)};\n`
   + `export const META = ${JSON.stringify(META)};\n`
-  + `export const RULES = ${JSON.stringify(rules)};\n`;
+  + `export const RULES = ${JSON.stringify(rules)};\n`
+  + `export const JOBMAP = ${JSON.stringify(jobmap)};\n`;
 fs.writeFileSync(path.join(root, 'web', 'embed-data.js'), embed);
 
 const hotels = [...new Set(records.map((r) => r.division).filter(Boolean))];

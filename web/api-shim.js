@@ -2,7 +2,7 @@
 // the standalone hosted demo. Replicates the server's REST routes over the
 // embedded snapshots. (Login here is a client-side demo gate; the full app uses
 // a hashed server passcode.)
-import { SNAPSHOTS as SEED_SNAPSHOTS, META as SEED_META, RULES as SEED_RULES } from './embed-data.js';
+import { SNAPSHOTS as SEED_SNAPSHOTS, META as SEED_META, RULES as SEED_RULES, JOBMAP as SEED_JOBMAP } from './embed-data.js';
 import { proposeMapping } from '../src/mapping.js';
 import { buildRecords } from '../src/transform.js';
 import { validate } from '../src/validation.js';
@@ -10,6 +10,7 @@ import { computeKPIs, groupBy, crossTab, salaryHistogram, tenureBuckets } from '
 import { compareSnapshots, movementSummary, buildTimeline } from '../src/movements.js';
 import { complianceMatrix, buildAlerts, missingDocuments, docStatus } from '../src/expiry.js';
 import { internalRatios, overallInternalRatio, gapAnalysis, ruleForPosition } from '../src/localization.js';
+import { standardize, mappingRows } from '../src/jobmap.js';
 import { generateInsights, executiveSummary } from '../src/insights.js';
 import { daysUntil } from '../src/util.js';
 import { EXPIRY_FIELDS } from '../src/schema.js';
@@ -53,6 +54,7 @@ const ADMIN = {
 };
 let session = { user: null };
 let RULES = (typeof SEED_RULES !== 'undefined' && SEED_RULES) ? SEED_RULES.slice() : [];
+let JOBMAP = (typeof SEED_JOBMAP !== 'undefined' && SEED_JOBMAP) ? Object.assign({}, SEED_JOBMAP) : {};
 const ordered = () => META.snapshots.slice().sort((a, b) => ((a.period || '') + (a.asOf || '')).localeCompare((b.period || '') + (b.asOf || ''))); // chronological
 const activeId = () => META.activeSnapshotId;
 
@@ -117,7 +119,7 @@ R['GET /api/workforce'] = (q) => { const d = fq(q); return ok({
   kpis: computeKPIs(d.records, d.asOf) }); };
 R['GET /api/saudization'] = (q) => { const d = fq(q);
   const build = (k) => internalRatios(d.records, k);
-  const positions = build('position').map((g) => { const rule = ruleForPosition(RULES, g.key); return gapAnalysis({ key: g.key, total: g.total, saudi: g.saudi }, rule ? rule.required_pct : null); });
+  const positions = build('position').map((g) => { const std = standardize(g.key, JOBMAP); const rule = ruleForPosition(RULES, std); return { ...gapAnalysis({ key: g.key, total: g.total, saudi: g.saudi }, rule ? rule.required_pct : null), standardized: std, rule_name: rule ? rule.name : null }; });
   return ok({ overall: overallInternalRatio(d.records), bySection: build('section'), byPosition: positions, byLevel: build('level_code'), byDivision: build('division'), rulesCount: RULES.filter((r) => r.status === 'active').length }); };
 R['GET /api/nationality'] = (q) => { const d = fq(q); const groups = groupBy(d.records, 'nationality', d.asOf); const total = d.records.length;
   return ok({ total, distinct: groups.length, groups: groups.map((g) => ({ ...g, pct: total ? g.total / total * 100 : 0 })),
@@ -151,6 +153,8 @@ R['GET /api/insights'] = (q) => { const d = fq(q); const m = movementsFor(q.peri
 R['GET /api/summary'] = (q) => { const d = fq(q); const active = SNAPSHOTS[activeId()]; const m = movementsFor(q.period); const ms = m && !m.first ? movementSummary(m.prevCount, m.result.newHires, m.result.missing, m.result.movements) : null; return ok({ summary: executiveSummary(d.records, { asOfISO: d.asOf, movementSummary: ms, quality: active.quality }) }); };
 R['GET /api/uploads'] = () => ok({ uploads: META.snapshots.slice().reverse().map((s) => ({ ...s, active: s.id === activeId() })) });
 R['GET /api/rules'] = () => ok({ rules: RULES });
+R['GET /api/jobmap'] = () => { const active = SNAPSHOTS[activeId()]; const positions = active ? active.records.map((r) => r.position).filter(Boolean) : []; return ok({ map: JOBMAP, rows: mappingRows(positions, JOBMAP), standardTitles: [...new Set(Object.values(JOBMAP).filter(Boolean))] }); };
+R['PUT /api/jobmap'] = (q, body) => { if (body && body.map && typeof body.map === 'object') { JOBMAP = body.map; return ok({ ok: true, map: JOBMAP }); } return { status: 400, body: { error: 'invalid_map' } }; };
 R['GET /api/audit'] = () => ok({ audit: [
   { at: SNAPSHOTS[activeId()].meta.uploadedAt, action: 'data_committed', actor: 'admin', detail: 'سبتمبر 2026 — 104 موظف — جودة 95.7%' },
   { at: new Date().toISOString(), action: 'login', actor: 'admin', detail: 'تسجيل دخول ناجح (عرض تجريبي)' },

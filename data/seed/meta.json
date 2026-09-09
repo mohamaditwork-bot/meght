@@ -1,13 +1,13 @@
 {
   "snapshots": [
     {
-      "id": "405abbbb-5911-4ff4-8019-ee150d80a744",
+      "id": "6e1fb625-dc79-4931-b3b8-31cd90eafb20",
       "period": "2026-09",
       "periodLabel": "سبتمبر 2026",
       "asOf": "2026-09-08",
       "fileName": "HR_MultiHotel.xlsx",
-      "uploadedAt": "2026-09-08T14:48:08.287Z",
-      "committedAt": "2026-09-08T14:48:08.287Z",
+      "uploadedAt": "2026-09-09T07:10:04.259Z",
+      "committedAt": "2026-09-09T07:10:04.259Z",
       "uploadedBy": "admin",
       "employeeCount": 46,
       "saudiPct": 82.6086956521739,
@@ -16,5 +16,5 @@
       "status": "committed"
     }
   ],
-  "activeSnapshotId": "405abbbb-5911-4ff4-8019-ee150d80a744"
+  "activeSnapshotId": "6e1fb625-dc79-4931-b3b8-31cd90eafb20"
 }
