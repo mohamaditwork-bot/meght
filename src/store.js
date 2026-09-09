@@ -7,8 +7,19 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SEED_DIR = path.join(__dirname, '..', 'data', 'seed');
+// Safe __dirname: when bundled to CommonJS (Netlify esbuild function bundler),
+// import.meta.url is empty and fileURLToPath() throws at load time, which would
+// crash the serverless function and make every /api call fail. Fall back to cwd.
+let __dirname;
+try { __dirname = path.dirname(fileURLToPath(import.meta.url)); }
+catch { __dirname = process.cwd(); }
+// Seed dir: prefer the bundled data/seed next to the source; if not present
+// (bundled function), also try cwd/data/seed.
+function firstExisting(paths, fallback) { for (const p of paths) { try { if (fs.existsSync(p)) return p; } catch {} } return fallback; }
+const SEED_DIR = firstExisting([
+  path.join(__dirname, '..', 'data', 'seed'),
+  path.join(process.cwd(), 'data', 'seed'),
+], path.join(__dirname, '..', 'data', 'seed'));
 
 // Data dir resolution. On serverless hosts (Netlify/Vercel) the app bundle is
 // READ-ONLY except the OS temp dir, so a write to ./data throws — which used to

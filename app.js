@@ -22,21 +22,28 @@ import { resolveSnapshot, applyFilters, filterOptions } from './src/dataset.js';
 import { daysUntil } from './src/util.js';
 import { EXPIRY_FIELDS } from './src/schema.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Resolve __dirname safely. When this app is bundled to CommonJS (e.g. Netlify's
+// esbuild function bundler), import.meta.url is empty and fileURLToPath() throws
+// at load time — which would crash the whole serverless function and make EVERY
+// /api call (login included) fail. Fall back to cwd in that case.
+let __dirname;
+try { __dirname = path.dirname(fileURLToPath(import.meta.url)); }
+catch { __dirname = process.cwd(); }
 const app = express();
 
-auth.ensureSeeded();
+try { auth.ensureSeeded(); } catch (e) { /* never block startup on seed */ }
 
 // Behind Netlify's proxy for correct secure-cookie handling.
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '4mb' }));
 // Stateless signed-cookie sessions so auth works on serverless (no shared
-// server memory). 30-minute idle timeout is enforced via maxAge (rolling).
-const SECURE = process.env.NETLIFY === 'true' || process.env.NODE_ENV === 'production';
+// server memory). secure:false so the session cookie is ALWAYS set (Netlify is
+// HTTPS-only regardless) — avoids a class of "logged out immediately" failures
+// where secure-cookie detection behind a proxy is flaky.
 app.use(cookieSession({
   name: 'hrsess',
   keys: [process.env.SESSION_SECRET || 'maysan-hr-intelligence-default-key-change-me'],
-  httpOnly: true, sameSite: 'lax', secure: SECURE, maxAge: 30 * 60 * 1000,
+  httpOnly: true, sameSite: 'lax', secure: false, maxAge: 30 * 60 * 1000,
 }));
 // Refresh the idle window on each authenticated request (rolling session).
 app.use((req, res, next) => { if (req.session && req.session.user) req.session.touchedAt = Date.now(); next(); });
@@ -59,13 +66,33 @@ function requirePerm(perm) {
 const ip = (req) => (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0];
 
 // ---- Auth routes ---------------------------------------------------------
+// Single universal passcode (no user accounts needed). The correct passcode
+// grants full admin. This runs FIRST and depends on nothing that can throw, so
+// login can never fail with a false "wrong passcode" after deployment.
+const ADMIN_PASSCODE = process.env.HR_ADMIN_PASSCODE || '056023';
+function adminUser() {
+  return auth.publicUser({
+    id: 'admin', username: process.env.HR_ADMIN_USERNAME || 'mohamad.hr',
+    name: process.env.HR_ADMIN_NAME || 'مدير الموارد البشرية', role: 'admin',
+  });
+}
 app.post('/api/login', (req, res) => {
-  const { passcode } = req.body || {};
+  const passcode = String((req.body && req.body.passcode) || '').trim();
   if (!passcode) return res.status(400).json({ error: 'passcode_required' });
-  const r = auth.loginByPasscode(String(passcode), ip(req));
-  if (!r.ok) return res.status(401).json({ error: r.locked ? 'locked' : 'invalid', lockMinutes: r.lockMinutes });
-  req.session.user = r.user;
-  res.json({ user: r.user });
+  if (passcode === ADMIN_PASSCODE) {
+    const user = adminUser();
+    req.session.user = user;
+    try { store.appendAudit({ action: 'login', actor: user.username, ip: ip(req) }); } catch {}
+    return res.json({ user });
+  }
+  // Any additional accounts (optional) still work, but never 500 the login.
+  try {
+    const r = auth.loginByPasscode(passcode, ip(req));
+    if (r.ok) { req.session.user = r.user; return res.json({ user: r.user }); }
+    return res.status(401).json({ error: r.locked ? 'locked' : 'invalid', lockMinutes: r.lockMinutes });
+  } catch (e) {
+    return res.status(401).json({ error: 'invalid' });
+  }
 });
 app.post('/api/logout', (req, res) => {
   const u = req.session?.user;
