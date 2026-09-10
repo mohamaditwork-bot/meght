@@ -74,7 +74,7 @@ const ADMIN_PASSCODE = process.env.HR_ADMIN_PASSCODE || '056023';
 function adminUser() {
   return auth.publicUser({
     id: 'admin', username: process.env.HR_ADMIN_USERNAME || 'mohamad.hr',
-    name: process.env.HR_ADMIN_NAME || 'مدير الموارد البشرية', role: 'admin',
+    name: process.env.HR_ADMIN_NAME || 'الموارد البشرية', role: 'admin',
   });
 }
 app.post('/api/login', (req, res) => {

@@ -60,7 +60,7 @@ export function verifySecret(secret, stored) {
 // login is IDENTICAL locally and after deployment.
 const DEFAULT_USERNAME = process.env.HR_ADMIN_USERNAME || 'mohamad.hr';
 const DEFAULT_PASSCODE = process.env.HR_ADMIN_PASSCODE || '056023';
-const DEFAULT_NAME = process.env.HR_ADMIN_NAME || 'مدير الموارد البشرية';
+const DEFAULT_NAME = process.env.HR_ADMIN_NAME || 'الموارد البشرية';
 
 function makeAdmin() {
   return {
