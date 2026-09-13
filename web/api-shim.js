@@ -18,8 +18,27 @@ import { EXPIRY_FIELDS } from '../src/schema.js';
 
 // Mutable in-memory store (seeded from the embedded data). Uploads add snapshots
 // here so the user can update the data entirely in the browser.
-const SNAPSHOTS = Object.assign({}, SEED_SNAPSHOTS);
-const META = { snapshots: SEED_META.snapshots.slice(), activeSnapshotId: SEED_META.activeSnapshotId };
+// Persistence: what the user uploads in the browser is saved to localStorage so
+// it SURVIVES page reloads and fully replaces the shipped demo data. This makes
+// "upload my Excel → everything (dashboards, search, reports) reflects it and
+// stays" work on the hosted/standalone build too.
+const LS_KEY = 'hr_data_v1';
+let SNAPSHOTS = Object.assign({}, SEED_SNAPSHOTS);
+let META = { snapshots: SEED_META.snapshots.slice(), activeSnapshotId: SEED_META.activeSnapshotId };
+(function loadPersisted() {
+  try {
+    const raw = window.localStorage && localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && saved.SNAPSHOTS && saved.META && Object.keys(saved.SNAPSHOTS).length) {
+      SNAPSHOTS = saved.SNAPSHOTS; META = saved.META;
+    }
+  } catch (e) { /* ignore corrupt/oversized storage */ }
+})();
+function persist() {
+  try { if (window.localStorage) localStorage.setItem(LS_KEY, JSON.stringify({ SNAPSHOTS, META })); }
+  catch (e) { try { console.warn('persist failed (storage full?)', e.message); } catch (_) {} }
+}
 
 // Inlined from dataset.js (pure — avoids pulling Node-only store.js into the bundle).
 function applyFilters(records, q = {}) {
@@ -102,6 +121,7 @@ R['GET /api/me'] = () => session.user ? { status: 200, body: { user: session.use
 
 R['GET /api/state'] = () => {
   const active = SNAPSHOTS[activeId()];
+  if (!active) return { status: 200, body: { hasData: false, active: null, snapshots: META.snapshots, options: {}, quality: null, user: session.user } };
   return { status: 200, body: {
     hasData: true,
     active: { id: active.meta.id, period: active.meta.period, periodLabel: active.meta.periodLabel, asOf: active.asOf },
@@ -111,7 +131,7 @@ R['GET /api/state'] = () => {
   } };
 };
 
-function fq(q) { const ds = resolve(q.period); return { asOf: ds.asOf, records: applyFilters(ds.records, q) }; }
+function fq(q) { const ds = resolve(q.period); if (!ds) return { asOf: null, records: [] }; return { asOf: ds.asOf, records: applyFilters(ds.records, q) }; }
 
 R['GET /api/kpis'] = (q) => { const d = fq(q); return ok({ kpis: computeKPIs(d.records, d.asOf), asOf: d.asOf, count: d.records.length }); };
 R['GET /api/workforce'] = (q) => { const d = fq(q); return ok({
@@ -241,6 +261,7 @@ function addSnapshot({ id, period, periodLabel, asOf, fileName }, records, dynam
   if (existing >= 0) { delete SNAPSHOTS[META.snapshots[existing].id]; META.snapshots[existing] = metaEntry; }
   else META.snapshots.push(metaEntry);
   META.activeSnapshotId = id;
+  persist();
   return metaEntry;
 }
 
@@ -248,7 +269,10 @@ function addSnapshot({ id, period, periodLabel, asOf, fileName }, records, dynam
 window.HR = {
   proposeMapping, buildRecords, validate, computeKPIs, filterOptions,
   detectPeriod, addSnapshot,
-  setActive(id) { if (SNAPSHOTS[id]) { META.activeSnapshotId = id; return true; } return false; },
-  resetToSeed() { for (const k of Object.keys(SNAPSHOTS)) delete SNAPSHOTS[k]; Object.assign(SNAPSHOTS, SEED_SNAPSHOTS); META.snapshots = SEED_META.snapshots.slice(); META.activeSnapshotId = SEED_META.activeSnapshotId; },
+  setActive(id) { if (SNAPSHOTS[id]) { META.activeSnapshotId = id; persist(); return true; } return false; },
+  resetToSeed() { SNAPSHOTS = Object.assign({}, SEED_SNAPSHOTS); META = { snapshots: SEED_META.snapshots.slice(), activeSnapshotId: SEED_META.activeSnapshotId }; try { localStorage.removeItem(LS_KEY); } catch (e) {} },
+  // Wipe ALL data (start empty until the user uploads their own Excel).
+  clearData() { SNAPSHOTS = {}; META = { snapshots: [], activeSnapshotId: null }; try { localStorage.removeItem(LS_KEY); } catch (e) {} },
+  hasPersisted() { try { return !!(window.localStorage && localStorage.getItem(LS_KEY)); } catch (e) { return false; } },
   uuid() { return (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 's' + Date.now() + Math.random().toString(16).slice(2); },
 };

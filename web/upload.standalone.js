@@ -47,8 +47,24 @@
           <h3>اسحب ملف Excel هنا أو اضغط للاختيار</h3><p>يدعم .xlsx و .xls — تُقرأ الأعمدة بالاسم لا بالترتيب</p>
           <input type="file" id="fileInput" accept=".xlsx,.xls" hidden></div>
         <div id="uploadStatus" style="margin-top:14px"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="clearData">🗑️ مسح كل البيانات (ابدأ من ملفي)</button>
+          <button class="btn" id="resetSeed">استعادة البيانات الافتراضية</button>
+        </div>
       </div></div>
-      <div class="data-note">ملاحظة: هذه نسخة تعمل في المتصفح؛ البيانات التي ترفعها تبقى في جهازك لهذه الجلسة فقط. للحفظ الدائم ومشاركة الفريق استخدم النسخة المستضافة على خادم.</div>`;
+      <div class="data-note">كل البيانات تأتي من ملف Excel الذي ترفعه. ما ترفعه يُحفظ في متصفحك ويبقى بعد تحديث الصفحة، ويحدّث كل الشاشات فوراً (بما فيها البحث عن الموظفين). لمشاركة الفريق على رابط واحد استخدم النسخة المستضافة على خادم.</div>`;
+    const bindMgmt = () => {
+      el('clearData') && el('clearData').addEventListener('click', () => {
+        if (!confirm('سيتم مسح كل البيانات الحالية لتبدأ برفع ملفك أنت. متابعة؟')) return;
+        window.HR.clearData(); toast('تم مسح البيانات — ارفع ملف Excel الآن', 'ok');
+        App.reload ? App.reload() : location.reload();
+      });
+      el('resetSeed') && el('resetSeed').addEventListener('click', () => {
+        window.HR.resetToSeed(); toast('تمت استعادة البيانات الافتراضية', 'ok');
+        App.reload ? App.reload() : location.reload();
+      });
+    };
+    bindMgmt();
     const dz = el('dz'), input = el('fileInput');
     dz.addEventListener('click', () => input.click());
     dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag'); });

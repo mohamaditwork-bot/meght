@@ -2243,8 +2243,31 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
 
   // web/api-shim.js
+  var LS_KEY = "hr_data_v1";
   var SNAPSHOTS2 = Object.assign({}, SNAPSHOTS);
   var META2 = { snapshots: META.snapshots.slice(), activeSnapshotId: META.activeSnapshotId };
+  (function loadPersisted() {
+    try {
+      const raw = window.localStorage && localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && saved.SNAPSHOTS && saved.META && Object.keys(saved.SNAPSHOTS).length) {
+        SNAPSHOTS2 = saved.SNAPSHOTS;
+        META2 = saved.META;
+      }
+    } catch (e) {
+    }
+  })();
+  function persist() {
+    try {
+      if (window.localStorage) localStorage.setItem(LS_KEY, JSON.stringify({ SNAPSHOTS: SNAPSHOTS2, META: META2 }));
+    } catch (e) {
+      try {
+        console.warn("persist failed (storage full?)", e.message);
+      } catch (_) {
+      }
+    }
+  }
   function applyFilters(records, q = {}) {
     let out = records;
     const eq = (key, val) => {
@@ -2378,6 +2401,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   R["GET /api/me"] = () => session.user ? { status: 200, body: { user: session.user } } : { status: 401, body: { error: "unauthenticated" } };
   R["GET /api/state"] = () => {
     const active = SNAPSHOTS2[activeId()];
+    if (!active) return { status: 200, body: { hasData: false, active: null, snapshots: META2.snapshots, options: {}, quality: null, user: session.user } };
     return { status: 200, body: {
       hasData: true,
       active: { id: active.meta.id, period: active.meta.period, periodLabel: active.meta.periodLabel, asOf: active.asOf },
@@ -2389,6 +2413,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   };
   function fq(q) {
     const ds = resolve(q.period);
+    if (!ds) return { asOf: null, records: [] };
     return { asOf: ds.asOf, records: applyFilters(ds.records, q) };
   }
   R["GET /api/kpis"] = (q) => {
@@ -2657,6 +2682,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       META2.snapshots[existing] = metaEntry;
     } else META2.snapshots.push(metaEntry);
     META2.activeSnapshotId = id;
+    persist();
     return metaEntry;
   }
   window.HR = {
@@ -2670,15 +2696,34 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     setActive(id) {
       if (SNAPSHOTS2[id]) {
         META2.activeSnapshotId = id;
+        persist();
         return true;
       }
       return false;
     },
     resetToSeed() {
-      for (const k of Object.keys(SNAPSHOTS2)) delete SNAPSHOTS2[k];
-      Object.assign(SNAPSHOTS2, SNAPSHOTS);
-      META2.snapshots = META.snapshots.slice();
-      META2.activeSnapshotId = META.activeSnapshotId;
+      SNAPSHOTS2 = Object.assign({}, SNAPSHOTS);
+      META2 = { snapshots: META.snapshots.slice(), activeSnapshotId: META.activeSnapshotId };
+      try {
+        localStorage.removeItem(LS_KEY);
+      } catch (e) {
+      }
+    },
+    // Wipe ALL data (start empty until the user uploads their own Excel).
+    clearData() {
+      SNAPSHOTS2 = {};
+      META2 = { snapshots: [], activeSnapshotId: null };
+      try {
+        localStorage.removeItem(LS_KEY);
+      } catch (e) {
+      }
+    },
+    hasPersisted() {
+      try {
+        return !!(window.localStorage && localStorage.getItem(LS_KEY));
+      } catch (e) {
+        return false;
+      }
     },
     uuid() {
       return window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : "s" + Date.now() + Math.random().toString(16).slice(2);
@@ -4360,8 +4405,24 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           <h3>اسحب ملف Excel هنا أو اضغط للاختيار</h3><p>يدعم .xlsx و .xls — تُقرأ الأعمدة بالاسم لا بالترتيب</p>
           <input type="file" id="fileInput" accept=".xlsx,.xls" hidden></div>
         <div id="uploadStatus" style="margin-top:14px"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="clearData">🗑️ مسح كل البيانات (ابدأ من ملفي)</button>
+          <button class="btn" id="resetSeed">استعادة البيانات الافتراضية</button>
+        </div>
       </div></div>
-      <div class="data-note">ملاحظة: هذه نسخة تعمل في المتصفح؛ البيانات التي ترفعها تبقى في جهازك لهذه الجلسة فقط. للحفظ الدائم ومشاركة الفريق استخدم النسخة المستضافة على خادم.</div>`;
+      <div class="data-note">كل البيانات تأتي من ملف Excel الذي ترفعه. ما ترفعه يُحفظ في متصفحك ويبقى بعد تحديث الصفحة، ويحدّث كل الشاشات فوراً (بما فيها البحث عن الموظفين). لمشاركة الفريق على رابط واحد استخدم النسخة المستضافة على خادم.</div>`;
+    const bindMgmt = () => {
+      el('clearData') && el('clearData').addEventListener('click', () => {
+        if (!confirm('سيتم مسح كل البيانات الحالية لتبدأ برفع ملفك أنت. متابعة؟')) return;
+        window.HR.clearData(); toast('تم مسح البيانات — ارفع ملف Excel الآن', 'ok');
+        App.reload ? App.reload() : location.reload();
+      });
+      el('resetSeed') && el('resetSeed').addEventListener('click', () => {
+        window.HR.resetToSeed(); toast('تمت استعادة البيانات الافتراضية', 'ok');
+        App.reload ? App.reload() : location.reload();
+      });
+    };
+    bindMgmt();
     const dz = el('dz'), input = el('fileInput');
     dz.addEventListener('click', () => input.click());
     dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag'); });
