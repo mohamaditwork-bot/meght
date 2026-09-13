@@ -7,5 +7,6 @@ data/uploads/
 .DS_Store
 *.tmp
 .netlify/
-web/shim.bundle.js
+# Generated Netlify publish dir (built from committed sources by netlify.toml)
+dist/
 scratchpad/
