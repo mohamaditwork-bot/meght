@@ -37,10 +37,11 @@
     return parts.length ? parts[parts.length - 1] : null;
   }
 
+  const BASE = '/appraisal'; // the appraisal app is mounted under /appraisal
   async function req(method, url, body) {
     const opt = { method, headers: {} };
     if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-    const r = await fetch(url, opt);
+    const r = await fetch(BASE + url, opt);
     let data = null; try { data = await r.json(); } catch (e) {}
     return { ok: r.ok, status: r.status, data };
   }

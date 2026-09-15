@@ -9,11 +9,12 @@
    ============================================================= */
 (function () {
   const cache = { appraisals: [], performance: [], role: null };
+  const BASE = '/appraisal'; // the appraisal app is mounted under /appraisal
 
   async function req(method, url, body) {
     const opt = { method, headers: {}, credentials: 'same-origin' };
     if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-    const r = await fetch(url, opt);
+    const r = await fetch(BASE + url, opt);
     let data = null; try { data = await r.json(); } catch (e) {}
     if (!r.ok) { const err = new Error((data && data.error) || ('http_' + r.status)); err.status = r.status; err.data = data; throw err; }
     return data;

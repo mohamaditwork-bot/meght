@@ -5,6 +5,7 @@ import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 import { readWorkbook } from './src/workbook.js';
 import { proposeMapping } from './src/mapping.js';
@@ -608,6 +609,17 @@ function detectPeriod(fileName) {
   const value = `${year}-${String(month).padStart(2, '0')}`;
   return { value, label: `${monthNames[month - 1]} ${year}`, year, month, confident, asOf: `${value}-01` };
 }
+
+// ---- Appraisal system (mounted sub-app) ----------------------------------
+// Performance-evaluation module + shareable manager evaluation links. It shares
+// this app's session (single sign-on: an HR login also unlocks appraisal admin)
+// and the same MySQL database. Served under /appraisal (and /appraisal/e/<token>
+// for manager links). Mounted BEFORE the SPA fallback so it isn't swallowed.
+try {
+  const require = createRequire(import.meta.url);
+  const { createAppraisalApp } = require('./appraisal/server/app.cjs');
+  app.use('/appraisal', createAppraisalApp());
+} catch (e) { try { console.error('[appraisal] mount failed:', e.message); } catch {} }
 
 // ---- Static & SPA --------------------------------------------------------
 app.use(express.static(path.join(__dirname, 'public')));

@@ -115,6 +115,11 @@
  });
  nav.appendChild(gEl);
  });
+ // External link to the Appraisal system (same deployment + single sign-on).
+ const extGroup = document.createElement('div'); extGroup.className = 'nav-group';
+ extGroup.innerHTML = '<div class="nav-group-t">التقييم · Appraisal</div>' +
+ '<a class="nav-item" href="/appraisal/"><span class="ico">📝</span><span>تقييم الأداء</span></a>';
+ nav.appendChild(extGroup);
  $$('.nav-item').forEach((a) => a.classList.toggle('active', a.dataset.route === App.currentRoute));
  }
 
