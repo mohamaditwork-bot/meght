@@ -11,8 +11,11 @@ const logo = 'data:image/svg+xml,' + encodeURIComponent(read('assets/logo.svg'))
 let idx = read('index.html');
 let body = idx.substring(idx.indexOf('<body>') + 6, idx.indexOf('</body>'));
 body = body.replace(/<script[\s\S]*?<\/script>/g, '');
-// drop the "back to HR platform" link (no HR platform in the standalone preview)
-body = body.replace(/<a class="btn btn-ghost" href="\/"[^<]*<\/a>/g, '');
+// Point the "الموارد البشرية" button at the HR platform's stable link (opens it
+// in a new tab from the preview). On the deployed server this stays "/".
+const HR_URL = 'https://claude.ai/artifact/Pa7iMKYVBA6zttXEtg6DTL';
+body = body.split('<a class="btn btn-ghost" href="/" title="الموارد البشرية">')
+  .join('<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + HR_URL + '" title="الموارد البشرية">');
 // swap logo asset references to the inlined data URI
 body = body.split('/appraisal/assets/logo.svg').join(logo);
 body = body.trim();
