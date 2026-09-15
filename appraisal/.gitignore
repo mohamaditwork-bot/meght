@@ -2,3 +2,6 @@ node_modules/
 data/
 .env
 *.log
+
+# generated appraisal preview artifact
+dist-artifact/
