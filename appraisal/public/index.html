@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maysan International Group — مجموعة ميسان الدولية</title>
+  <link rel="icon" href="assets/logo.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- Login gate -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <img src="assets/logo.svg" class="login-logo" alt="Maysan International Group" />
+      <div class="login-lang">
+        <button data-lang="ar" class="lang-btn">العربية</button>
+        <button data-lang="en" class="lang-btn">English</button>
+      </div>
+      <h1 id="login-title">دخول آمن</h1>
+      <p id="login-subtitle" class="muted">أدخل الرمز السرّي أو كلمة المرور للمتابعة</p>
+      <form id="login-form">
+        <label id="pin-label" for="pin-input">الرمز السرّي / كلمة المرور</label>
+        <input id="pin-input" type="password" autocomplete="current-password" inputmode="numeric" />
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block">دخول</button>
+        <div id="login-error" class="error hidden"></div>
+      </form>
+      <p id="login-hint" class="hint"></p>
+    </div>
+  </div>
+
+  <!-- App shell -->
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo.svg" class="brand-logo" alt="Maysan International Group" />
+        <div class="brand-text">
+          <strong id="brand-title"></strong>
+          <span id="brand-tag" class="muted"></span>
+        </div>
+      </div>
+      <nav class="mainnav" id="mainnav"></nav>
+      <div class="topbar-actions">
+        <button id="lang-toggle" class="btn btn-ghost" title="Language"></button>
+        <button id="logout-btn" class="btn btn-ghost"></button>
+      </div>
+    </header>
+    <main id="view" class="view"></main>
+    <footer class="appfoot">
+      <span>Maysan International Group · مجموعة ميسان الدولية</span>
+    </footer>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="vendor/qrcode.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

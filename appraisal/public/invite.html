@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تقييم الأداء — مجموعة ميسان الدولية</title>
+  <link rel="icon" href="/assets/logo.svg" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="invite-app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/assets/logo.svg" class="brand-logo" alt="Maysan International Group" />
+        <div class="brand-text">
+          <strong id="brand-title">مجموعة ميسان الدولية</strong>
+          <span id="brand-tag" class="muted"></span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="lang-toggle" class="btn btn-ghost" title="Language">EN</button>
+      </div>
+    </header>
+    <main id="invite-root" class="view"></main>
+    <footer class="appfoot">
+      <span>Maysan International Group · مجموعة ميسان الدولية</span>
+    </footer>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/data.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/scoring.js"></script>
+  <script src="/js/invite.js"></script>
+</body>
+</html>
