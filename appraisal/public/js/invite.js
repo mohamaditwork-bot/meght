@@ -59,9 +59,8 @@
     const val = state.ratings[key];
     return `<tr>
       <td>${esc(L(it))}</td>
-      <td class="ltr" style="text-align:center;width:70px">${it.weight}</td>
-      <td style="width:110px"><input type="number" class="crit" data-key="${key}" min="0" max="${it.weight}" step="1"
-        value="${val === undefined ? '' : val}" style="width:100%"></td>
+      <td class="ltr" style="text-align:center;width:56px">${it.weight}</td>
+      <td style="min-width:200px">${window.ScoreCtl.html(key, it.weight, val)}</td>
     </tr>`;
   }
 
@@ -157,28 +156,29 @@
   }
 
   function bindCrit() {
-    $$('.crit').forEach((inp) => inp.addEventListener('input', (e) => {
-      const key = e.target.dataset.key;
-      const v = e.target.value;
-      if (v === '') { delete state.ratings[key]; } else { state.ratings[key] = Math.max(0, Number(v) || 0); }
+    const area = $('#crit-area') || document;
+    window.ScoreCtl.bind(area, (key, val) => {
+      if (val === null) delete state.ratings[key]; else state.ratings[key] = val;
       recalc();
-    }));
+    });
   }
 
   function firstInvalid() {
-    if (!state.deptId) return '#iv-dept';
+    if (!state.deptId) return $('#iv-dept');
     const inv = state.invite;
-    if (!(inv.employeeName || (($('#iv-emp') && $('#iv-emp').value) || '').trim())) return '#iv-emp';
-    if (!(($('#iv-mgr') && $('#iv-mgr').value) || '').trim()) return '#iv-mgr';
-    const missing = $$('.crit').find((i) => i.value === '');
-    return missing ? '.crit' : null;
+    if (!(inv.employeeName || (($('#iv-emp') && $('#iv-emp').value) || '').trim())) return $('#iv-emp');
+    if (!(($('#iv-mgr') && $('#iv-mgr').value) || '').trim()) return $('#iv-mgr');
+    const missingCtl = $$('.score-ctl').find((c) => !c.classList.contains('has-val'));
+    return missingCtl ? missingCtl.querySelector('.sc-num') : null;
   }
 
   async function submit() {
     const bad = firstInvalid();
     if (bad) {
-      const el = bad === '.crit' ? $$('.crit').find((i) => i.value === '') : $(bad);
-      if (el) { el.classList.add('invalid'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); try { el.focus(); } catch (e) {} }
+      const ctl = bad.closest ? bad.closest('.score-ctl') : null;
+      (ctl || bad).classList.add('invalid');
+      bad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try { bad.focus(); } catch (e) {}
       toast(t('fillRequired') || t('required'));
       return;
     }

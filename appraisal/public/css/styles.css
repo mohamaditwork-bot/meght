@@ -231,3 +231,19 @@ body {
 .link-url input { width: 100%; font-family: ui-monospace, monospace; font-size: 12.5px; direction: ltr;
   padding: 8px 10px; border: 1px solid var(--line, #e5e7eb); border-radius: 8px; margin: 6px 0 10px; background: #fff; }
 .sec-row td { background: #f1f5f9; font-weight: 700; }
+
+/* ---- Fast, mobile-friendly score control (auto-capped) ---- */
+.score-ctl{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.score-ctl .sc-btn{flex:none;width:38px;height:38px;border:1px solid #d0d7de;background:#fff;border-radius:10px;font-size:22px;line-height:1;font-weight:800;color:#0b4d2e;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.score-ctl .sc-btn:active{background:#e8f1ea}
+.score-ctl .sc-range{flex:1;min-width:64px;accent-color:#1e883f;height:32px}
+.score-ctl .sc-num{flex:none;width:56px;height:38px;text-align:center;font-weight:800;font-size:16px;border:1px solid #d0d7de;border-radius:10px;padding:0 4px}
+.score-ctl.has-val .sc-num{border-color:#1e883f;color:#0b4d2e}
+.score-ctl .sc-max{flex:none;color:#64748b;font-size:12px;font-weight:700;min-width:32px}
+.score-ctl.invalid .sc-num{border-color:#dc2626}
+@media(max-width:640px){
+  .score-ctl{gap:6px}
+  .score-ctl .sc-range{min-width:40px}
+  .score-ctl .sc-btn{width:44px;height:44px}
+  .score-ctl .sc-num{width:52px;height:44px}
+}
