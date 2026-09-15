@@ -75,6 +75,16 @@
   async function revokeInvite(token) { const d = await req('POST', '/api/invites/' + encodeURIComponent(token) + '/revoke'); return d.invite; }
   async function deleteInvite(token) { await req('DELETE', '/api/invites/' + encodeURIComponent(token)); }
 
+  // ---- HR employees (link with the HR platform's uploaded Excel) ----
+  async function hrEmployees(q) {
+    try {
+      const r = await fetch('/api/employees' + (q ? ('?q=' + encodeURIComponent(q)) : ''), { credentials: 'same-origin' });
+      if (!r.ok) return [];
+      const d = await r.json();
+      return d.employees || [];
+    } catch (e) { return []; }
+  }
+
   // ---- Language (per-device) ----
   const getLang = () => { try { return localStorage.getItem('mig_lang') || 'ar'; } catch (e) { return 'ar'; } };
   const setLang = (l) => { try { localStorage.setItem('mig_lang', l); } catch (e) {} };
@@ -97,6 +107,7 @@
     getAppraisals, getAppraisal, saveAppraisal, deleteAppraisal,
     getPerformanceReviews, getPerformanceReview, savePerformanceReview, deletePerformanceReview,
     listInvites, createInvite, revokeInvite, deleteInvite,
+    hrEmployees,
     getLang, setLang, exportAll, importAll,
   };
 })();

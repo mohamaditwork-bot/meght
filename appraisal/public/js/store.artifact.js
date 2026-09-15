@@ -62,6 +62,9 @@
     revokeInvite: function (t) { var v = db.invites.find(function (x) { return x.token === t; }); if (v) { v.status = 'revoked'; save(); } return Promise.resolve(v); },
     deleteInvite: function (t) { db.invites = db.invites.filter(function (x) { return x.token !== t; }); save(); return Promise.resolve(); },
 
+    // No HR data in the offline preview build.
+    hrEmployees: function () { return Promise.resolve([]); },
+
     getLang: function () { try { return localStorage.getItem('mig_lang') || 'ar'; } catch (e) { return 'ar'; } },
     setLang: function (l) { try { localStorage.setItem('mig_lang', l); } catch (e) {} },
     exportAll: function () { return { appraisals: db.appraisals.slice(), performanceReviews: db.performance.slice(), exportedAt: new Date().toISOString() }; },

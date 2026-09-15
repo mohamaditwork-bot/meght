@@ -247,3 +247,13 @@ body {
   .score-ctl .sc-btn{width:44px;height:44px}
   .score-ctl .sc-num{width:52px;height:44px}
 }
+
+/* ---- HR employee picker (link appraisal with HR data) ---- */
+.emp-picker{position:relative}
+.emp-results{position:absolute;z-index:30;left:0;right:0;background:#fff;border:1px solid #d0d7de;border-radius:10px;max-height:280px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.14)}
+.emp-results:empty{display:none}
+.emp-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid #eef2f5;display:flex;flex-direction:column;gap:2px}
+.emp-item:last-child{border-bottom:none}
+.emp-item:hover{background:#f1f5f9}
+.emp-item .emp-meta{font-size:11.5px;color:#64748b}
+.emp-empty{padding:10px 12px;color:#64748b;font-size:12.5px}

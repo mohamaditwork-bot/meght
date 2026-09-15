@@ -292,6 +292,7 @@
       </div>
       <div class="card">
         <h2>${esc(t("employeeInfo"))}</h2>
+        ${employeePickerHTML()}
         <div class="grid-4">
           <div class="field"><label>${esc(t("employeeName"))} ${star}</label><input id="f-name" value="${esc(d.employeeName)}"></div>
           <div class="field"><label>${esc(t("fileNo"))} ${star}</label><input id="f-file" value="${esc(d.fileNo)}"></div>
@@ -309,6 +310,26 @@
     bindText("#f-job", "jobTitle");
     bindText("#f-mgr", "directManager");
     $("#f-join").addEventListener("change", (e) => { d.joiningDate = e.target.value; });
+    // Link with HR employee data: pick an employee to auto-fill the fields.
+    bindEmployeePicker(v, (e) => {
+      const setv = (sel, val) => { const el = $(sel); if (el) el.value = val; };
+      d.employeeName = e.arabic_name || e.name || ""; setv("#f-name", d.employeeName);
+      d.fileNo = e.employee_code || ""; setv("#f-file", d.fileNo);
+      d.jobTitle = e.position || ""; setv("#f-job", d.jobTitle);
+      if (e.division) {
+        d.hotelName = e.division;
+        const hs = $("#f-hotel");
+        if (hs) {
+          if (!Array.from(hs.options).some((o) => o.value === e.division)) {
+            const opt = document.createElement("option"); opt.value = e.division; opt.textContent = e.division; hs.appendChild(opt);
+          }
+          hs.value = e.division;
+        }
+      }
+      const dep = deptFromSection(e.section, e.position);
+      if (dep) { const ds = $("#sel-dept"); if (ds) { ds.value = dep; ds.dispatchEvent(new Event("change")); } }
+      toast(state.lang === "en" ? "Employee loaded from HR" : "تم جلب بيانات الموظف من الموارد البشرية");
+    });
     $("#sel-period").addEventListener("change", (e) => { d.periodId = e.target.value; });
     $("#sel-date-from").addEventListener("change", (e) => { d.evalDateFrom = e.target.value; });
     $("#sel-date-to").addEventListener("change", (e) => { d.evalDateTo = e.target.value; });
@@ -622,12 +643,54 @@
     return `<span class="badge" style="background:${m[0]}">${esc(m[1])}</span>`;
   }
 
+  // Best-effort map an HR section/position to an appraisal department id.
+  function deptFromSection(section, position) {
+    const hay = ((section || '') + ' ' + (position || '')).toLowerCase();
+    for (const d of D.DEPARTMENTS) {
+      const ar = String(d.ar || '').toLowerCase(), en = String(d.en || '').toLowerCase();
+      if ((ar && hay.includes(ar)) || (en && hay.includes(en))) return d.id;
+    }
+    return '';
+  }
+  // HR employee picker: search box + results; onPick(emp) fills the form.
+  function employeePickerHTML() {
+    const lbl = state.lang === 'en' ? 'Pick an employee from HR data' : 'اختر موظفاً من بيانات الموارد البشرية';
+    const ph = state.lang === 'en' ? 'Search by name / ID / job…' : 'ابحث بالاسم أو الرقم الوظيفي أو المسمى…';
+    return `<div class="field emp-picker"><label>${esc(lbl)}</label>
+      <input id="emp-search" autocomplete="off" placeholder="${esc(ph)}">
+      <div id="emp-results" class="emp-results"></div></div>`;
+  }
+  function bindEmployeePicker(root, onPick) {
+    const inp = root.querySelector('#emp-search'), box = root.querySelector('#emp-results');
+    if (!inp || !box) return;
+    let tmr;
+    inp.addEventListener('input', () => {
+      clearTimeout(tmr); const q = inp.value.trim();
+      tmr = setTimeout(async () => {
+        if (!q) { box.innerHTML = ''; return; }
+        let list = []; try { list = await S.hrEmployees(q); } catch (e) {}
+        if (!list.length) {
+          box.innerHTML = `<div class="emp-empty">${esc(state.lang === 'en' ? 'No HR employees found (upload the Excel in the HR platform first).' : 'لا توجد بيانات موظفين — ارفع ملف الإكسل في نظام الموارد البشرية أولاً.')}</div>`;
+          return;
+        }
+        box.innerHTML = list.slice(0, 25).map((e, i) =>
+          `<div class="emp-item" data-i="${i}"><b>${esc(e.arabic_name || e.name || '')}</b>` +
+          `<span class="emp-meta">${esc(e.employee_code || '')}${e.position ? ' · ' + esc(e.position) : ''}${e.division ? ' · ' + esc(e.division) : ''}</span></div>`).join('');
+        box.querySelectorAll('.emp-item').forEach((el) => el.addEventListener('click', () => {
+          const e = list[Number(el.dataset.i)]; box.innerHTML = ''; inp.value = e.arabic_name || e.name || ''; onPick(e);
+        }));
+      }, 250);
+    });
+  }
+
   function renderLinks(v) {
+    let lkHotel = '';
     v.innerHTML =
       `<div class="page-title"><h1>${esc(t("linksTitle"))}</h1></div>
       <div class="card">
         <h2>${esc(t("createLink"))}</h2>
         <p class="muted">${esc(t("createLinkDesc"))}</p>
+        ${employeePickerHTML()}
         <div class="grid-2">
           <div class="field"><label>${esc(t("hotel"))}</label>
             <select id="lk-hotel"><option value="">${esc(t("chooseHotel"))}</option>
@@ -654,9 +717,21 @@
     const deptSel = $("#lk-dept"), openRow = $("#lk-openrow");
     deptSel.addEventListener("change", () => { openRow.style.display = deptSel.value ? "flex" : "none"; });
 
+    // Link with the HR employee data: pick an employee to auto-fill the fields.
+    bindEmployeePicker(v, (e) => {
+      $("#lk-emp").value = e.arabic_name || e.name || "";
+      $("#lk-fileno").value = e.employee_code || "";
+      $("#lk-job").value = e.position || "";
+      lkHotel = e.division || "";
+      const dep = deptFromSection(e.section, e.position);
+      if (dep) { deptSel.value = dep; openRow.style.display = "flex"; }
+      toast(state.lang === "en" ? "Employee loaded from HR" : "تم جلب بيانات الموظف من الموارد البشرية");
+    });
+
     $("#lk-create").addEventListener("click", async () => {
       const payload = {
         hotelId: $("#lk-hotel").value || null,
+        hotelName: lkHotel || null,
         deptId: $("#lk-dept").value || null,
         lockDept: $("#lk-dept").value ? !$("#lk-openchoice").checked : false,
         employeeName: $("#lk-emp").value.trim() || null,
