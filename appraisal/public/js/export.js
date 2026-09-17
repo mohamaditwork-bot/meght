@@ -173,5 +173,29 @@
     downloadBlob(blob, filename);
   }
 
-  window.EXPORT = { printReport, exportExcel, downloadJSON, downloadBlob, getPrintCSS: () => PRINT_CSS };
+  // Aggregate export: a whole (filtered) list of appraisals to one .xls sheet.
+  function exportList(list) {
+    const SC = window.SCORING;
+    const L = (o) => (o ? (o.ar || o.en || "") : "");
+    const fmtDate = (a) => (window.REPORT ? window.REPORT.dateRange(a) : (a.evalDateFrom || a.createdAt || "").slice(0, 10));
+    const head = ["#", "Report No / رقم التقرير", "Date / التاريخ", "Employee / الموظف", "File No / الرقم",
+      "Hotel / الفندق", "Department / القسم", "Job / المسمى", "Core / الأساسي (70)", "Dept / القسم (40)",
+      "Total / الإجمالي (110)", "%", "Level / المستوى", "Evaluator / المقيّم"];
+    const rows = ["<tr>" + head.map((h) => `<th style="background:#0d4f4a;color:#fff">${xmlEsc(h)}</th>`).join("") + "</tr>"];
+    (list || []).forEach((a, i) => {
+      const s = a.score || (SC ? SC.compute(a.deptId, a.ratings || {}) : { core: "", dept: "", total: "", pct: "", level: {} });
+      const dep = SC ? SC.getDepartment(a.deptId) : null;
+      const cells = [i + 1, a.reportNo || "", fmtDate(a), a.employeeName || "", a.employeeNo || a.fileNo || "",
+        a.hotelName || "", dep ? L(dep) : (a.deptId || ""), a.jobTitle || "", s.core, s.dept, s.total, s.pct,
+        s.level ? L(s.level) : "", a.managerName || a.directManager || ""];
+      rows.push("<tr>" + cells.map((c) => `<td>${xmlEsc(c)}</td>`).join("") + "</tr>");
+    });
+    const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">' +
+      "<head><meta charset='utf-8'><style>td,th{border:1px solid #ccc;padding:4px;font-family:Arial;font-size:11px}</style></head>" +
+      "<body><table>" + rows.join("") + "</table></body></html>";
+    const blob = new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    downloadBlob(blob, "maysan-appraisals-" + new Date().toISOString().slice(0, 10) + ".xls");
+  }
+
+  window.EXPORT = { printReport, exportExcel, exportList, downloadJSON, downloadBlob, getPrintCSS: () => PRINT_CSS };
 })();

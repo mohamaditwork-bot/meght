@@ -892,6 +892,10 @@
   }
 
   /* ---------------- Dashboard ---------------- */
+  let dashF = { hotel: "", dept: "", job: "", period: "", employee: "" };
+  const dashCharts = [];
+  function disposeDash() { dashCharts.forEach((c) => { try { c.dispose(); } catch (e) {} }); dashCharts.length = 0; }
+
   async function renderDashboard(v) {
     v.innerHTML = `<div class="page-title"><h1>${esc(t("dashboardTitle"))}</h1></div><div class="card empty">${esc(t("loading"))}</div>`;
     try { await S.refresh(); } catch (e) {}
@@ -899,54 +903,92 @@
     const all = S.getAppraisals();
     if (!all.length) { v.innerHTML = `<div class="page-title"><h1>${esc(t("dashboardTitle"))}</h1></div><div class="card empty">${esc(t("noData"))}</div>`; return; }
 
-    const scored = all.map((a) => ({ a, s: SC.compute(a.deptId, a.ratings || {}) }));
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+    const deptLabel = (id) => L(SC.getDepartment(id) || { en: id });
+    const periodLabel = (id) => { const p = (D.PERIODS || []).find((x) => x.id === id); return p ? L(p) : id; };
+    const opts = (list, labeler) => list.map((x) => `<option value="${esc(x)}">${esc(labeler ? labeler(x) : x)}</option>`).join("");
     const avg = (arr) => arr.length ? +(arr.reduce((x, y) => x + y, 0) / arr.length).toFixed(1) : 0;
-    const totalAvg = avg(scored.map((x) => x.s.total));
-    const pctAvg = avg(scored.map((x) => x.s.pct));
-    const empCount = new Set(all.map((a) => (a.employeeName || "").trim().toLowerCase()).filter(Boolean)).size;
+    const allLbl = state.lang === "en" ? "All" : "الكل";
 
-    const byDept = {};
-    scored.forEach((x) => { (byDept[x.a.deptId] = byDept[x.a.deptId] || []).push(x.s.total); });
-    const deptBars = Object.keys(byDept).map((id) => ({ label: L(SC.getDepartment(id) || { en: id }), val: avg(byDept[id]) })).sort((a, b) => b.val - a.val);
+    function draw() {
+      const filtered = all.filter((a) =>
+        (!dashF.hotel || a.hotelName === dashF.hotel) &&
+        (!dashF.dept || a.deptId === dashF.dept) &&
+        (!dashF.job || a.jobTitle === dashF.job) &&
+        (!dashF.period || a.periodId === dashF.period) &&
+        (!dashF.employee || a.employeeName === dashF.employee)
+      ).map((a) => ({ a, s: SC.compute(a.deptId, a.ratings || {}) }));
 
-    const byHotel = {};
-    scored.forEach((x) => { const k = (x.a.hotelName || "—").trim() || "—"; (byHotel[k] = byHotel[k] || []).push(x.s.total); });
-    const hotelBars = Object.keys(byHotel).map((k) => ({ label: k, val: avg(byHotel[k]) })).sort((a, b) => b.val - a.val);
+      const wrap = $("#dash-body");
+      if (!filtered.length) { disposeDash(); wrap.innerHTML = `<div class="card empty">${esc(t("noData"))}</div>`; return; }
+      const totalAvg = avg(filtered.map((x) => x.s.total));
+      const pctAvg = avg(filtered.map((x) => x.s.pct));
+      const empCount = new Set(filtered.map((x) => (x.a.employeeName || "").trim().toLowerCase()).filter(Boolean)).size;
+      const best = filtered.slice().sort((a, b) => b.s.total - a.s.total)[0];
+      const groupAvg = (keyer, labeler) => { const m = {}; filtered.forEach((x) => { const k = keyer(x) || "—"; (m[k] = m[k] || []).push(x.s.total); }); return Object.keys(m).map((k) => ({ label: labeler ? labeler(k) : k, val: avg(m[k]) })).sort((a, b) => b.val - a.val); };
+      const byDept = groupAvg((x) => x.a.deptId, deptLabel);
+      const byHotel = groupAvg((x) => x.a.hotelName, null);
+      const byJob = groupAvg((x) => x.a.jobTitle, null).slice(0, 8);
+      const dist = {}; filtered.forEach((x) => { dist[x.s.level.en] = (dist[x.s.level.en] || 0) + 1; });
+      const levelData = D.PERFORMANCE_LEVELS.filter((lv) => dist[lv.en]).map((lv) => ({ name: L(lv), value: dist[lv.en], itemStyle: { color: lv.color } }));
+      const byMonth = {}; filtered.forEach((x) => { const d = (x.a.createdAt || "").slice(0, 7) || "—"; (byMonth[d] = byMonth[d] || []).push(x.s.total); });
+      const months = Object.keys(byMonth).sort();
+      const trend = months.map((m) => avg(byMonth[m]));
+      const top = filtered.slice().sort((a, b) => b.s.total - a.s.total).slice(0, 8);
 
-    const dist = {};
-    scored.forEach((x) => { const k = x.s.level.en; dist[k] = (dist[k] || 0) + 1; });
-    const top = scored.slice().sort((a, b) => b.s.total - a.s.total).slice(0, 5);
+      wrap.innerHTML = `
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-ico">📋</div><div class="k-val">${filtered.length}</div><div class="k-lbl">${esc(t("kpiTotal"))}</div></div>
+          <div class="kpi"><div class="k-ico">⭐</div><div class="k-val">${totalAvg}</div><div class="k-lbl">${esc(t("kpiAvgScore"))} / ${D.TOTAL_MAX}</div></div>
+          <div class="kpi"><div class="k-ico">📈</div><div class="k-val">${pctAvg}%</div><div class="k-lbl">${esc(t("kpiAvgPct"))}</div></div>
+          <div class="kpi"><div class="k-ico">👥</div><div class="k-val">${empCount}</div><div class="k-lbl">${esc(t("kpiEmployees"))}</div></div>
+          <div class="kpi"><div class="k-ico">🏆</div><div class="k-val" style="font-size:16px">${esc(best ? (best.a.employeeName || "—") : "—")}</div><div class="k-lbl">${state.lang === "en" ? "Top" : "الأعلى"} · ${best ? best.s.total : 0}</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><h2>${esc(t("byDepartment"))}</h2><div id="ch-dept" class="chart"></div></div>
+          <div class="card"><h2>${esc(t("byHotel"))}</h2><div id="ch-hotel" class="chart"></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><h2>${esc(t("levelDistribution"))}</h2><div id="ch-level" class="chart"></div></div>
+          <div class="card"><h2>${state.lang === "en" ? "Score trend" : "اتجاه التقييم عبر الوقت"}</h2><div id="ch-trend" class="chart"></div></div>
+        </div>
+        <div class="card"><h2>${state.lang === "en" ? "By job title" : "حسب المسمى الوظيفي"}</h2><div id="ch-job" class="chart"></div></div>
+        <div class="card"><h2>${esc(t("topPerformers"))}</h2><div class="table-wrap"><table class="data-table"><thead><tr>
+          <th>${esc(t("employee"))}</th><th>${esc(t("hotel"))}</th><th>${esc(t("department"))}</th><th>${esc(t("score"))}</th><th>${esc(t("level"))}</th></tr></thead><tbody>
+          ${top.map((x) => { const dep = SC.getDepartment(x.a.deptId) || {}; return `<tr><td>${esc(x.a.employeeName || "")}</td><td>${esc(x.a.hotelName || "")}</td><td>${esc(L(dep))}</td><td><b>${x.s.total}</b>/${x.s.totalMax} (${x.s.pct}%)</td><td><span class="badge" style="background:${x.s.level.color}">${esc(L(x.s.level))}</span></td></tr>`; }).join("")}
+        </tbody></table></div></div>`;
 
-    function bars(items, max) {
-      return `<div class="bars">${items.map((it) =>
-        `<div class="bar-row"><div class="bar-label">${esc(it.label)}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, (it.val / max) * 100)}%">${it.val}</div></div></div>`
-      ).join("")}</div>`;
+      disposeDash();
+      const baseText = { fontFamily: "Tajawal, Inter, sans-serif" };
+      const hbar = (color) => ({ grid: { left: 8, right: 20, top: 16, bottom: 8, containLabel: true }, tooltip: { trigger: "axis" }, xAxis: { type: "value", max: D.TOTAL_MAX }, series: [{ type: "bar", itemStyle: { color, borderRadius: [0, 6, 6, 0] }, label: { show: true, position: "right" } }] });
+      const mk = (id, option) => { const el = $("#" + id); if (!el || !window.echarts) return; const c = echarts.init(el); c.setOption(Object.assign({ textStyle: baseText }, option)); dashCharts.push(c); };
+      requestAnimationFrame(() => {
+        mk("ch-dept", Object.assign(hbar("#1E883F"), { yAxis: { type: "category", data: byDept.map((d) => d.label).reverse() }, series: [Object.assign(hbar("#1E883F").series[0], { data: byDept.map((d) => d.val).reverse() })] }));
+        mk("ch-hotel", Object.assign(hbar("#156835"), { yAxis: { type: "category", data: byHotel.map((d) => d.label).reverse() }, series: [Object.assign(hbar("#156835").series[0], { data: byHotel.map((d) => d.val).reverse() })] }));
+        mk("ch-job", Object.assign(hbar("#27A84E"), { yAxis: { type: "category", data: byJob.map((d) => d.label).reverse() }, series: [Object.assign(hbar("#27A84E").series[0], { data: byJob.map((d) => d.val).reverse() })] }));
+        mk("ch-level", { tooltip: { trigger: "item" }, legend: { bottom: 0, textStyle: baseText }, series: [{ type: "pie", radius: ["45%", "70%"], data: levelData, label: { formatter: "{b}: {c}" } }] });
+        mk("ch-trend", { grid: { left: 8, right: 20, top: 16, bottom: 24, containLabel: true }, tooltip: { trigger: "axis" }, xAxis: { type: "category", data: months }, yAxis: { type: "value", max: D.TOTAL_MAX }, series: [{ type: "line", smooth: true, data: trend, areaStyle: { color: "rgba(30,136,63,.15)" }, lineStyle: { color: "#1E883F", width: 3 }, itemStyle: { color: "#156835" } }] });
+      });
+
+      const exp = $("#dash-export");
+      if (exp) exp.onclick = () => { try { window.EXPORT.exportList(filtered.map((x) => Object.assign({}, x.a, { score: x.s }))); } catch (e) { toast(t("saveFailed")); } };
     }
 
-    v.innerHTML =
-      `<div class="page-title"><h1>${esc(t("dashboardTitle"))}</h1></div>
-      <div class="kpi-grid">
-        <div class="kpi"><div class="k-ico">📋</div><div class="k-val">${all.length}</div><div class="k-lbl">${esc(t("kpiTotal"))}</div></div>
-        <div class="kpi"><div class="k-ico">⭐</div><div class="k-val">${totalAvg}</div><div class="k-lbl">${esc(t("kpiAvgScore"))} / ${D.TOTAL_MAX}</div></div>
-        <div class="kpi"><div class="k-ico">📈</div><div class="k-val">${pctAvg}%</div><div class="k-lbl">${esc(t("kpiAvgPct"))}</div></div>
-        <div class="kpi"><div class="k-ico">👥</div><div class="k-val">${empCount}</div><div class="k-lbl">${esc(t("kpiEmployees"))}</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card"><h2>${esc(t("byDepartment"))}</h2>${bars(deptBars, D.TOTAL_MAX)}</div>
-        <div class="card"><h2>${esc(t("byHotel"))}</h2>${bars(hotelBars, D.TOTAL_MAX)}</div>
-      </div>
-      <div class="card"><h2>${esc(t("levelDistribution"))}</h2><div class="dist">
-        ${D.PERFORMANCE_LEVELS.map((lv) => dist[lv.en] ? `<div class="dist-item"><span class="dot" style="background:${lv.color}"></span>${esc(L(lv))}: <b>${dist[lv.en]}</b></div>` : "").join("")}
+    const sel = (id, options, ph) => `<select id="${id}"><option value="">${esc(ph)}</option>${options}</select>`;
+    v.innerHTML = `
+      <div class="page-title"><h1>${esc(t("dashboardTitle"))}</h1>
+        <button class="btn btn-outline" id="dash-export">📥 ${esc(t("exportExcel"))}</button></div>
+      <div class="card filters"><div class="grid-4">
+        <div class="field"><label>${esc(t("hotel"))}</label>${sel("f-hotel", opts(uniq(all.map((a) => a.hotelName))), allLbl)}</div>
+        <div class="field"><label>${esc(t("department"))}</label>${sel("f-dept", opts(uniq(all.map((a) => a.deptId)), deptLabel), allLbl)}</div>
+        <div class="field"><label>${esc(t("jobTitle"))}</label>${sel("f-job", opts(uniq(all.map((a) => a.jobTitle))), allLbl)}</div>
+        <div class="field"><label>${esc(t("period"))}</label>${sel("f-period", opts(uniq(all.map((a) => a.periodId)), periodLabel), allLbl)}</div>
+        <div class="field"><label>${esc(t("employee"))}</label>${sel("f-emp", opts(uniq(all.map((a) => a.employeeName))), allLbl)}</div>
       </div></div>
-      <div class="card"><h2>${esc(t("topPerformers"))}</h2><div class="table-wrap"><table class="data-table"><thead><tr>
-        <th>${esc(t("employee"))}</th><th>${esc(t("hotel"))}</th><th>${esc(t("department"))}</th><th>${esc(t("score"))}</th><th>${esc(t("level"))}</th>
-      </tr></thead><tbody>${top.map((x) => {
-        const dep = SC.getDepartment(x.a.deptId) || {};
-        return `<tr><td>${esc(x.a.employeeName || "")}</td>
-          <td>${esc(x.a.hotelName || "")}</td><td>${esc(L(dep))}</td><td><b>${x.s.total}</b>/${x.s.totalMax} (${x.s.pct}%)</td>
-          <td><span class="badge" style="background:${x.s.level.color}">${esc(L(x.s.level))}</span></td></tr>`;
-      }).join("")}</tbody></table></div></div>`;
+      <div id="dash-body"></div>`;
+    const bind = (id, key) => { const el = $("#" + id); if (!el) return; el.value = dashF[key] || ""; el.addEventListener("change", () => { dashF[key] = el.value; draw(); }); };
+    bind("f-hotel", "hotel"); bind("f-dept", "dept"); bind("f-job", "job"); bind("f-period", "period"); bind("f-emp", "employee");
+    draw();
   }
 
   /* ---------------- Settings ---------------- */
