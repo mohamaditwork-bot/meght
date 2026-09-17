@@ -88,6 +88,12 @@
       await S.logout();
       $("#app").classList.add("hidden"); $("#login-screen").classList.remove("hidden");
     });
+    // Mobile drawer: hamburger opens the vertical sidebar; backdrop closes it.
+    const sb = $("#sidebar"), bd = $("#side-backdrop"), mb = $("#menu-btn");
+    window.__closeDrawer = () => { if (sb) sb.classList.remove("open"); if (bd) bd.classList.remove("show"); };
+    if (mb) mb.addEventListener("click", () => { if (sb) sb.classList.toggle("open"); if (bd) bd.classList.toggle("show"); });
+    if (bd) bd.addEventListener("click", window.__closeDrawer);
+
     // resume an existing server session
     S.me().then((role) => { if (role) enterApp(); });
   }
@@ -111,6 +117,7 @@
       state.view = b.dataset.view; state.viewingId = null;
       if (state.view === "new") state.draft = null;
       if (state.view === "performance") state.performanceDraft = null;
+      if (window.__closeDrawer) window.__closeDrawer();
       renderNav(); render();
     }));
   }

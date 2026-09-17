@@ -28,10 +28,10 @@
     </div>
   </div>
 
-  <!-- App shell -->
+  <!-- App shell: vertical sidebar + main column -->
   <div id="app" class="app hidden">
-    <header class="topbar">
-      <div class="brand">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
         <img src="/appraisal/assets/logo.svg" class="brand-logo" alt="Maysan International Group" />
         <div class="brand-text">
           <strong id="brand-title"></strong>
@@ -39,16 +39,26 @@
         </div>
       </div>
       <nav class="mainnav" id="mainnav"></nav>
-      <div class="topbar-actions">
+      <div class="side-actions">
         <a class="btn btn-ghost" href="/" title="الموارد البشرية">🏠 الموارد البشرية</a>
         <button id="lang-toggle" class="btn btn-ghost" title="Language"></button>
         <button id="logout-btn" class="btn btn-ghost"></button>
       </div>
-    </header>
-    <main id="view" class="view"></main>
-    <footer class="appfoot">
-      <span>Maysan International Group · مجموعة ميسان الدولية</span>
-    </footer>
+    </aside>
+    <div class="main-col">
+      <header class="topbar mobile-bar">
+        <button id="menu-btn" class="menu-btn" aria-label="Menu">☰</button>
+        <div class="mobile-brand">
+          <img src="/appraisal/assets/logo.svg" class="brand-logo" alt="MG" />
+          <strong>MAYSAN · التقييم</strong>
+        </div>
+      </header>
+      <main id="view" class="view"></main>
+      <footer class="appfoot">
+        <span>Maysan International Group · مجموعة ميسان الدولية</span>
+      </footer>
+    </div>
+    <div class="side-backdrop" id="side-backdrop"></div>
   </div>
 
   <!-- Toast -->
