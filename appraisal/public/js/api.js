@@ -75,6 +75,12 @@
   async function revokeInvite(token) { const d = await req('POST', '/api/invites/' + encodeURIComponent(token) + '/revoke'); return d.invite; }
   async function deleteInvite(token) { await req('DELETE', '/api/invites/' + encodeURIComponent(token)); }
 
+  // ---- Users & roles (admin) ----
+  async function listUsers() { const d = await req('GET', '/api/users'); return (d && d.users) || []; }
+  async function addUser(p) { const d = await req('POST', '/api/users', p); return d.user; }
+  async function toggleUser(id) { return req('POST', '/api/users/' + encodeURIComponent(id) + '/toggle'); }
+  async function deleteUser(id) { return req('DELETE', '/api/users/' + encodeURIComponent(id)); }
+
   // ---- HR employees (link with the HR platform's uploaded Excel) ----
   async function hrEmployees(q) {
     try {
@@ -107,6 +113,7 @@
     getAppraisals, getAppraisal, saveAppraisal, deleteAppraisal,
     getPerformanceReviews, getPerformanceReview, savePerformanceReview, deletePerformanceReview,
     listInvites, createInvite, revokeInvite, deleteInvite,
+    listUsers, addUser, toggleUser, deleteUser,
     hrEmployees,
     getLang, setLang, exportAll, importAll,
   };

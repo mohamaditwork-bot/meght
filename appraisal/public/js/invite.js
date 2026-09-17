@@ -202,6 +202,7 @@
     const r = await req('POST', '/api/public/invite/' + encodeURIComponent(state.token) + '/submit', payload);
     if (r.ok && r.data && r.data.ok) {
       const s = r.data.score || {};
+      const again = r.data.reusable ? `<button class="btn btn-primary" id="iv-again" style="margin-top:14px">${esc(t('submitAnother'))}</button>` : '';
       $('#invite-root').innerHTML =
         `<div class="card" style="max-width:560px;margin:48px auto;text-align:center">
           <div style="font-size:52px;line-height:1">✅</div>
@@ -211,7 +212,15 @@
             <div class="kpi"><div class="k-val">${s.total != null ? s.total : '—'}</div><div class="k-lbl">${esc(t('score'))} / ${D.TOTAL_MAX}</div></div>
             <div class="kpi"><div class="k-val">${s.pct != null ? s.pct + '%' : '—'}</div><div class="k-lbl">${esc(t('kpiAvgPct') || '%')}</div></div>
           </div>
+          ${again}
         </div>`;
+      const againBtn = $('#iv-again');
+      if (againBtn) againBtn.addEventListener('click', () => {
+        state.ratings = {};
+        if (!(state.invite.lockDept && state.invite.deptId)) state.deptId = state.invite.deptId || null;
+        render();
+        window.scrollTo(0, 0);
+      });
     } else {
       btn.disabled = false; btn.textContent = t('submitEvaluation');
       const reason = r.data && r.data.error;

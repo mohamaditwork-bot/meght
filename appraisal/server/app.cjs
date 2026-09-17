@@ -77,7 +77,7 @@ function requireAdmin(handler) {
 function requireAuth(handler) {
   return async (req, res) => {
     const role = await currentRole(req);
-    if (role !== 'admin' && role !== 'staff') return res.status(401).json({ error: 'unauthorized' });
+    if (role !== 'admin' && role !== 'staff' && role !== 'manager') return res.status(401).json({ error: 'unauthorized' });
     return handler(req, res);
   };
 }
@@ -91,7 +91,13 @@ app.post('/api/auth/login', wrap(async (req, res) => {
   const pin = String((req.body && req.body.pin) || '').trim();
   let role = null;
   if (pin && pin === ADMIN_PIN) role = 'admin';
-  else if (pin && pin === STAFF_PIN) role = 'staff';
+  else if (pin && pin === STAFF_PIN) role = 'manager';
+  else if (pin) {
+    const store = await getStore();
+    const users = await store.settings.get('users', []);
+    const u = (users || []).find((x) => x.active !== false && String(x.passcode) === pin);
+    if (u) role = u.role === 'admin' ? 'admin' : 'manager';
+  }
   if (!role) return res.status(401).json({ error: 'bad_pin' });
   setSession(res, await makeToken(role));
   res.json({ ok: true, role });
@@ -102,6 +108,39 @@ app.get('/api/auth/me', wrap(async (req, res) => {
   res.json({ role });
 }));
 app.post('/api/auth/logout', wrap(async (req, res) => { clearSession(res); res.json({ ok: true }); }));
+
+// ---- Users & roles (admin only) -----------------------------------------
+app.get('/api/users', requireAdmin(wrap(async (req, res) => {
+  const store = await getStore();
+  const users = await store.settings.get('users', []);
+  res.json({ users: (users || []).map((u) => ({ id: u.id, name: u.name, username: u.username, role: u.role, active: u.active !== false })) });
+})));
+app.post('/api/users', requireAdmin(wrap(async (req, res) => {
+  const store = await getStore();
+  const b = req.body || {};
+  const passcode = String(b.passcode || '').trim();
+  if (!passcode) return res.status(400).json({ error: 'passcode_required' });
+  const users = await store.settings.get('users', []);
+  const taken = (users || []).some((u) => String(u.passcode) === passcode) || passcode === ADMIN_PIN || passcode === STAFF_PIN;
+  if (taken) return res.status(400).json({ error: 'passcode_taken' });
+  const u = { id: 'u_' + Date.now() + '_' + crypto.randomBytes(2).toString('hex'), name: b.name || '', username: b.username || '', passcode, role: b.role === 'admin' ? 'admin' : 'manager', active: true, createdAt: new Date().toISOString() };
+  users.push(u); await store.settings.set('users', users);
+  res.json({ user: { id: u.id, name: u.name, username: u.username, role: u.role, active: true } });
+})));
+app.post('/api/users/:id/toggle', requireAdmin(wrap(async (req, res) => {
+  const store = await getStore();
+  const users = await store.settings.get('users', []);
+  const u = (users || []).find((x) => x.id === req.params.id);
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  u.active = u.active === false; await store.settings.set('users', users);
+  res.json({ ok: true, active: u.active });
+})));
+app.delete('/api/users/:id', requireAdmin(wrap(async (req, res) => {
+  const store = await getStore();
+  const users = (await store.settings.get('users', [])).filter((x) => x.id !== req.params.id);
+  await store.settings.set('users', users);
+  res.json({ ok: true });
+})));
 
 // ---- Report-number helpers ----------------------------------------------
 async function appraisalReportNo() {
@@ -116,11 +155,11 @@ async function performanceReportNo() {
 }
 
 // ---- Appraisals (numeric) — admin ---------------------------------------
-app.get('/api/appraisals', requireAdmin(wrap(async (req, res) => {
+app.get('/api/appraisals', requireAuth(wrap(async (req, res) => {
   const store = await getStore();
   res.json({ appraisals: await store.appraisals.list() });
 })));
-app.get('/api/appraisals/:id', requireAdmin(wrap(async (req, res) => {
+app.get('/api/appraisals/:id', requireAuth(wrap(async (req, res) => {
   const store = await getStore();
   const a = await store.appraisals.get(req.params.id);
   if (!a) return res.status(404).json({ error: 'not_found' });
@@ -144,7 +183,7 @@ app.delete('/api/appraisals/:id', requireAdmin(wrap(async (req, res) => {
 })));
 
 // ---- Performance reviews (qualitative) — admin --------------------------
-app.get('/api/performance', requireAdmin(wrap(async (req, res) => {
+app.get('/api/performance', requireAuth(wrap(async (req, res) => {
   const store = await getStore();
   res.json({ performanceReviews: await store.performance.list() });
 })));
@@ -170,13 +209,13 @@ function baseUrl(req) {
 }
 function inviteLink(req, token) { return `${baseUrl(req)}${req.baseUrl || ''}/e/${token}`; }
 
-app.get('/api/invites', requireAdmin(wrap(async (req, res) => {
+app.get('/api/invites', requireAuth(wrap(async (req, res) => {
   const store = await getStore();
   const invites = await store.invites.list();
   res.json({ invites: invites.map((i) => ({ ...i, url: inviteLink(req, i.token) })) });
 })));
 
-app.post('/api/invites', requireAdmin(wrap(async (req, res) => {
+app.post('/api/invites', requireAuth(wrap(async (req, res) => {
   const store = await getStore();
   const b = req.body || {};
   const hotel = b.hotelId ? hotelById(b.hotelId) : null;
@@ -197,6 +236,8 @@ app.post('/api/invites', requireAdmin(wrap(async (req, res) => {
     periodId: b.periodId || null,
     note: b.note || null,
     resultId: null,
+    reusable: b.reusable === true,   // multi-use link: accepts more than one evaluation
+    submitCount: 0,
     createdBy: 'admin',
     createdAt: new Date().toISOString(),
     submittedAt: null,
@@ -233,13 +274,15 @@ function publicInviteView(invite) {
     managerName: invite.managerName,
     periodId: invite.periodId,
     note: invite.note,
+    reusable: !!invite.reusable,
+    submitCount: invite.submitCount || 0,
     expiresAt: invite.expiresAt,
   };
 }
 function inviteUsable(invite) {
   if (!invite) return { ok: false, reason: 'not_found' };
   if (invite.status === 'revoked') return { ok: false, reason: 'revoked' };
-  if (invite.status === 'submitted') return { ok: false, reason: 'submitted' };
+  if (invite.status === 'submitted' && !invite.reusable) return { ok: false, reason: 'submitted' };
   if (invite.expiresAt && Date.now() > Date.parse(invite.expiresAt)) return { ok: false, reason: 'expired' };
   return { ok: true };
 }
@@ -302,9 +345,14 @@ app.post('/api/public/invite/:token/submit', wrap(async (req, res) => {
     lang: b.lang || 'ar',
   };
   await store.appraisals.save(appraisal);
-  await store.invites.update(invite.token, { status: 'submitted', submittedAt: now, resultId: appraisal.id });
+  const count = (invite.submitCount || 0) + 1;
+  // A reusable link stays open (accepts more evaluations); a single-use link closes.
+  await store.invites.update(invite.token, {
+    status: invite.reusable ? 'open' : 'submitted',
+    submittedAt: now, resultId: appraisal.id, submitCount: count,
+  });
 
-  res.json({ ok: true, reportNo: appraisal.reportNo, score: { total: score.total, pct: score.pct } });
+  res.json({ ok: true, reportNo: appraisal.reportNo, score: { total: score.total, pct: score.pct }, reusable: !!invite.reusable });
 }));
 
 // ---- Static + invite page routing ---------------------------------------

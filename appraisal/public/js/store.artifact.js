@@ -9,7 +9,7 @@
 (function () {
   var SC = window.SCORING;
   var KEY = 'maysan_appraisal_artifact_v1';
-  var db = { appraisals: [], performance: [], invites: [], seq: 0, perfSeq: 0 };
+  var db = { appraisals: [], performance: [], invites: [], users: [], seq: 0, perfSeq: 0 };
   var role = null;
 
   function load() { try { var raw = localStorage.getItem(KEY); if (raw) db = Object.assign(db, JSON.parse(raw)); } catch (e) {} }
@@ -23,7 +23,14 @@
   window.STORE = {
     ensureSeeded: function () {},
     role: function () { return role; },
-    login: function (pin) { pin = String(pin).trim(); if (pin === '056023') role = 'admin'; else if (pin === '1234') role = 'staff'; else return Promise.reject(new Error('bad_pin')); return Promise.resolve({ role: role }); },
+    login: function (pin) {
+      pin = String(pin).trim();
+      if (pin === '056023') role = 'admin';
+      else if (pin === '1234') role = 'manager';
+      else { var u = (db.users || []).find(function (x) { return x.active !== false && String(x.passcode) === pin; }); role = u ? (u.role === 'admin' ? 'admin' : 'manager') : null; }
+      if (!role) return Promise.reject(new Error('bad_pin'));
+      return Promise.resolve({ role: role });
+    },
     me: function () { return Promise.resolve(role); },
     logout: function () { role = null; return Promise.resolve(); },
     refresh: function () { load(); return Promise.resolve(); },
@@ -61,6 +68,18 @@
     },
     revokeInvite: function (t) { var v = db.invites.find(function (x) { return x.token === t; }); if (v) { v.status = 'revoked'; save(); } return Promise.resolve(v); },
     deleteInvite: function (t) { db.invites = db.invites.filter(function (x) { return x.token !== t; }); save(); return Promise.resolve(); },
+
+    // Users & roles (stored locally in the preview build).
+    listUsers: function () { return Promise.resolve((db.users || []).map(function (u) { return { id: u.id, name: u.name, username: u.username, role: u.role, active: u.active !== false }; })); },
+    addUser: function (b) {
+      var pass = String((b && b.passcode) || '').trim();
+      if (!pass) return Promise.reject(new Error('passcode_required'));
+      if (pass === '056023' || pass === '1234' || (db.users || []).some(function (u) { return String(u.passcode) === pass; })) return Promise.reject(new Error('passcode_taken'));
+      var u = { id: uid('u_'), name: (b && b.name) || '', username: (b && b.username) || '', passcode: pass, role: (b && b.role) === 'admin' ? 'admin' : 'manager', active: true };
+      db.users.push(u); save(); return Promise.resolve({ id: u.id, name: u.name, username: u.username, role: u.role, active: true });
+    },
+    toggleUser: function (id) { var u = (db.users || []).find(function (x) { return x.id === id; }); if (u) { u.active = u.active === false; save(); } return Promise.resolve({ ok: true }); },
+    deleteUser: function (id) { db.users = (db.users || []).filter(function (x) { return x.id !== id; }); save(); return Promise.resolve({ ok: true }); },
 
     // No HR data in the offline preview build.
     hrEmployees: function () { return Promise.resolve([]); },

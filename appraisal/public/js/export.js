@@ -5,52 +5,61 @@
 (function () {
   const D = window.APPRAISAL_DATA;
 
+  // Compact single-A4-page report. Sized so a full appraisal (13 criteria +
+  // summary + development + signatures) fits on ONE printed page.
   const PRINT_CSS = `
+  @page { size: A4 portrait; margin: 7mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; color:#12211f; margin:0; padding:24px; background:#fff; }
+  html, body { height:auto; }
+  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; color:#12211f; margin:0; padding:10px; background:#fff; font-size:10px; }
   .ar { font-family: "Segoe UI", Tahoma, "Traditional Arabic", sans-serif; direction:rtl; display:inline-block; }
   .ltr { direction:ltr; unicode-bidi:isolate; display:inline-block; }
-  .report { max-width: 900px; margin:0 auto; }
-  .rep-head { display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:3px solid #128a3f; padding-bottom:12px; }
-  .rep-logo { height:120px; width:auto; }
+  .report { max-width: 800px; margin:0 auto; }
+  .rep-head { display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:2px solid #128a3f; padding-bottom:6px; }
+  .rep-logo { height:52px; width:auto; }
   .rep-title { text-align:center; flex:1; }
-  .rep-title h1 { margin:0; font-size:20px; color:#0d4f4a; }
-  .rep-title h2 { margin:2px 0; font-size:18px; color:#128a3f; }
-  .rep-sub { font-size:12px; color:#555; }
+  .rep-title h1 { margin:0; font-size:15px; color:#0d4f4a; }
+  .rep-title h2 { margin:1px 0; font-size:13px; color:#128a3f; }
+  .rep-sub { font-size:9px; color:#555; }
   .rep-qr { text-align:center; }
-  .rep-qr img { width:90px; height:90px; }
-  .qr-cap { font-size:9px; color:#666; }
-  .rep-meta { display:grid; grid-template-columns:1fr 1fr; gap:4px 24px; margin:14px 0; font-size:12px; }
+  .rep-qr img { width:58px; height:58px; }
+  .qr-cap { font-size:7px; color:#666; }
+  .rep-meta { display:grid; grid-template-columns:1fr 1fr; gap:1px 20px; margin:7px 0; font-size:9.5px; }
   .rep-meta span { color:#666; }
-  .rep-sec { background:#0d4f4a; color:#fff; padding:6px 10px; font-size:14px; margin:18px 0 0; border-radius:4px 4px 0 0; }
+  .rep-sec { background:#0d4f4a; color:#fff; padding:3px 8px; font-size:11px; margin:8px 0 0; border-radius:3px 3px 0 0; break-after:avoid; }
   .rep-sec .ar { color:#c9f2d4; }
-  .rep-table { width:100%; border-collapse:collapse; font-size:11px; }
-  .rep-table th { background:#e8f5ec; color:#0d4f4a; padding:5px 6px; border:1px solid #cfe6d6; text-align:left; }
-  .rep-table td { padding:4px 6px; border:1px solid #e2e8e4; vertical-align:top; }
-  .rep-table .c-name .ar { display:block; color:#128a3f; font-size:10px; }
-  .rep-table .c-num { text-align:center; width:42px; }
-  .rep-table .c-rate { width:180px; }
+  .rep-table { width:100%; border-collapse:collapse; font-size:9px; }
+  .rep-table th { background:#e8f5ec; color:#0d4f4a; padding:2px 5px; border:1px solid #cfe6d6; text-align:left; }
+  .rep-table td { padding:2px 5px; border:1px solid #e2e8e4; vertical-align:top; }
+  .rep-table tr { break-inside:avoid; }
+  .rep-table .c-name .ar { display:block; color:#128a3f; font-size:8.5px; }
+  .rep-table .c-num { text-align:center; width:38px; }
+  .rep-table .c-rate { width:150px; }
   .sec-row td { background:#f1f7f3; font-weight:bold; color:#0d4f4a; }
-  .sec-score { float:right; background:#128a3f; color:#fff; padding:1px 8px; border-radius:10px; font-size:10px; }
-  .rep-summary { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:16px 0; }
-  .sum-card { border:1px solid #cfe6d6; border-radius:8px; padding:8px; text-align:center; background:#f8fbf9; }
+  .sec-score { float:right; background:#128a3f; color:#fff; padding:0 7px; border-radius:9px; font-size:9px; }
+  .rep-summary { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin:9px 0; break-inside:avoid; }
+  .sum-card { border:1px solid #cfe6d6; border-radius:6px; padding:5px; text-align:center; background:#f8fbf9; }
   .sum-card.total { background:#0d4f4a; color:#fff; border-color:#0d4f4a; }
-  .sum-lbl { font-size:10px; color:inherit; opacity:.85; }
-  .sum-val { font-size:16px; font-weight:bold; margin-top:4px; }
-  .dev-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-  .dev-item { border:1px solid #e2e8e4; border-radius:6px; padding:8px; font-size:11px; }
-  .dev-label { font-weight:bold; color:#0d4f4a; margin-bottom:4px; }
+  .sum-lbl { font-size:8.5px; color:inherit; opacity:.85; }
+  .sum-val { font-size:13px; font-weight:bold; margin-top:2px; }
+  .dev-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; break-inside:avoid; }
+  .dev-item { border:1px solid #e2e8e4; border-radius:5px; padding:5px; font-size:9px; }
+  .dev-label { font-weight:bold; color:#0d4f4a; margin-bottom:2px; }
   .dev-label .ar { color:#128a3f; font-weight:normal; }
-  .dev-val { white-space:pre-wrap; min-height:24px; }
-  .dev-row { margin-top:10px; font-size:11px; display:flex; flex-direction:column; gap:4px; }
-  .sig-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:12px; }
+  .dev-val { white-space:pre-wrap; min-height:12px; }
+  .dev-row { margin-top:6px; font-size:9px; display:flex; flex-direction:column; gap:2px; }
+  .sig-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px; break-inside:avoid; }
   .sig-box { text-align:center; }
-  .sig-line { border-bottom:1px solid #333; min-height:52px; display:flex; align-items:center; justify-content:center; }
-  .sig-img { max-height:48px; max-width:100%; }
-  .sig-name { font-weight:bold; font-size:11px; margin-top:2px; }
-  .sig-role { font-size:10px; color:#555; margin-top:2px; }
-  .rep-foot { margin-top:20px; text-align:center; font-size:10px; color:#888; border-top:1px solid #eee; padding-top:8px; }
-  @media print { body { padding:0; } .rep-sec, .sum-card.total { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  .sig-line { border-bottom:1px solid #333; min-height:36px; display:flex; align-items:center; justify-content:center; }
+  .sig-img { max-height:34px; max-width:100%; }
+  .sig-name { font-weight:bold; font-size:9.5px; margin-top:2px; }
+  .sig-role { font-size:8.5px; color:#555; margin-top:1px; }
+  .rep-foot { margin-top:8px; text-align:center; font-size:8.5px; color:#888; border-top:1px solid #eee; padding-top:5px; }
+  @media print {
+    body { padding:0; }
+    .report { max-width:none; }
+    .rep-sec, .sum-card.total, .sec-score { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
   `;
 
   function printReport(appraisal) {

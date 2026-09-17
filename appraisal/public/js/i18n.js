@@ -235,7 +235,25 @@ const I18N = {
     inviteSubmittedAlready: "This evaluation has already been submitted.",
     inviteExpired: "This link has expired.",
     managerName: "Direct manager name",
-    yourName: "Your name (evaluator)"
+    yourName: "Your name (evaluator)",
+    reusableLink: "Reusable link (accepts more than one evaluation)",
+    reusableShort: "Reusable",
+    submitAnother: "Evaluate another employee",
+    manageUsers: "Users & Roles",
+    navUsers: "Users",
+    addUser: "Add account",
+    userName: "Name",
+    userLogin: "Username",
+    userPass: "Passcode",
+    userRole: "Role",
+    roleAdmin: "Admin (full control)",
+    roleManager: "Manager (evaluate only, cannot delete)",
+    noPermission: "You do not have permission for this action.",
+    usersDesc: "Add accounts for managers. A manager can create and view evaluations and links, but cannot delete or manage users.",
+    active: "Active",
+    deactivate: "Deactivate",
+    activate: "Activate",
+    accountAdded: "Account added"
   },
   ar: {
     appName: "مجموعة ميسان الدولية",
@@ -459,7 +477,25 @@ const I18N = {
     inviteSubmittedAlready: "تم إرسال هذا التقييم مسبقاً.",
     inviteExpired: "انتهت صلاحية هذا الرابط.",
     managerName: "اسم المدير المباشر",
-    yourName: "اسمك (المُقيّم)"
+    yourName: "اسمك (المُقيّم)",
+    reusableLink: "رابط متعدّد الاستخدام (يقبل أكثر من تقييم)",
+    reusableShort: "متعدّد",
+    submitAnother: "تقييم موظف آخر",
+    manageUsers: "المستخدمون والصلاحيات",
+    navUsers: "المستخدمون",
+    addUser: "إضافة حساب",
+    userName: "الاسم",
+    userLogin: "اسم المستخدم",
+    userPass: "رمز الدخول",
+    userRole: "الصلاحية",
+    roleAdmin: "مدير النظام (تحكم كامل)",
+    roleManager: "مدير (تقييم فقط، لا يحذف)",
+    noPermission: "لا تملك صلاحية لهذا الإجراء.",
+    usersDesc: "أضف حسابات للمدراء. المدير يقدر ينشئ ويعرض التقييمات والروابط، لكن ما يقدر يحذف أو يدير المستخدمين.",
+    active: "نشط",
+    deactivate: "إيقاف",
+    activate: "تفعيل",
+    accountAdded: "تمت إضافة الحساب"
   }
 };
 window.I18N = I18N;

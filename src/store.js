@@ -74,7 +74,8 @@ async function initStore() {
   );
   await pool.query('CREATE TABLE IF NOT EXISTS hr_kv (k VARCHAR(191) PRIMARY KEY, v JSON NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
   const [rows] = await pool.query('SELECT k, v FROM hr_kv');
-  for (const r of rows) { try { mem[r.k] = typeof r.v === 'string' ? JSON.parse(r.v) : r.v; } catch { mem[r.k] = null; } }
+  // mysql2 auto-parses JSON columns; only JSON.parse a string that is valid JSON.
+  for (const r of rows) { mem[r.k] = (typeof r.v === 'string') ? (() => { try { return JSON.parse(r.v); } catch { return r.v; } })() : r.v; }
   if (mem['meta'] === undefined) await seedDbFromDisk();
   console.log('[store] MySQL connected —', typeof cfg === 'string' ? cfg.replace(/:[^:@/]*@/, ':****@') : `${cfg.host}/${cfg.database}`);
 }

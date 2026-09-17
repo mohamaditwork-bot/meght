@@ -92,17 +92,19 @@
     S.me().then((role) => { if (role) enterApp(); });
   }
 
-  /* ---------------- Navigation ---------------- */
+  /* ---------------- Navigation & roles ---------------- */
+  const isAdmin = () => S.role() === "admin";
   const NAV = [
     { id: "new", key: "navNew" },
     { id: "performance", key: "navPerformance" },
     { id: "links", key: "navLinks" },
     { id: "history", key: "navHistory" },
     { id: "dashboard", key: "navDashboard" },
-    { id: "settings", key: "navSettings" }
+    { id: "users", key: "navUsers", admin: true },
+    { id: "settings", key: "navSettings", admin: true }
   ];
   function renderNav() {
-    $("#mainnav").innerHTML = NAV.map((n) =>
+    $("#mainnav").innerHTML = NAV.filter((n) => !n.admin || isAdmin()).map((n) =>
       `<button data-view="${n.id}" class="${state.view === n.id ? "active" : ""}">${esc(t(n.key))}</button>`
     ).join("");
     $$("#mainnav button").forEach((b) => b.addEventListener("click", () => {
@@ -113,19 +115,20 @@
     }));
   }
 
-  const PROTECTED_VIEWS = ["links", "history", "dashboard", "settings"];
-  const adminUnlocked = () => S.role() === "admin";
+  // Only settings + user management require admin; managers can create & view.
+  const ADMIN_VIEWS = ["settings", "users"];
 
   function render() {
     const v = $("#view");
     if (state.viewingId) return renderReport(v);
-    if (PROTECTED_VIEWS.includes(state.view) && !adminUnlocked()) return renderAdminGate(v);
+    if (ADMIN_VIEWS.includes(state.view) && !isAdmin()) return renderAdminGate(v);
     switch (state.view) {
       case "new": return renderNew(v);
       case "performance": return renderPerformanceOverview(v);
       case "links": return renderLinks(v);
       case "history": return renderHistory(v);
       case "dashboard": return renderDashboard(v);
+      case "users": return renderUsers(v);
       case "settings": return renderSettings(v);
     }
   }
@@ -640,7 +643,9 @@
   function inviteStatusBadge(inv) {
     const map = { open: ["#0ea5e9", t("statusOpen")], submitted: ["#16a34a", t("statusSubmitted")], revoked: ["#6b7280", t("statusRevoked")] };
     const m = map[inv.status] || map.open;
-    return `<span class="badge" style="background:${m[0]}">${esc(m[1])}</span>`;
+    let html = `<span class="badge" style="background:${m[0]}">${esc(m[1])}</span>`;
+    if (inv.reusable) html += ` <span class="badge" style="background:#0891b2">🔁 ${esc(t("reusableShort"))}${inv.submitCount ? " " + inv.submitCount : ""}</span>`;
+    return html;
   }
 
   // Best-effort map an HR section/position to an appraisal department id.
@@ -709,6 +714,8 @@
         </div>
         <label class="check-line" id="lk-openrow" style="display:none;margin:4px 0 10px">
           <input type="checkbox" id="lk-openchoice"> ${esc(t("allowManagerChangeDept"))}</label>
+        <label class="check-line" style="margin:4px 0 10px">
+          <input type="checkbox" id="lk-reusable"> ${esc(t("reusableLink"))}</label>
         <button class="btn btn-primary" id="lk-create">${esc(t("createLink"))}</button>
         <div id="lk-result"></div>
       </div>
@@ -740,6 +747,7 @@
         managerName: $("#lk-mgr").value.trim() || null,
         periodId: $("#lk-period").value || null,
         note: $("#lk-note").value.trim() || null,
+        reusable: $("#lk-reusable").checked,
       };
       const btn = $("#lk-create"); btn.disabled = true;
       try {
@@ -787,8 +795,8 @@
           <td class="inline-actions">
             <button class="btn btn-sm btn-outline" data-copy="${esc(inv.url)}">${esc(t("copyLink"))}</button>
             ${inv.resultId ? `<button class="btn btn-sm btn-outline" data-result="${esc(inv.resultId)}">${esc(t("viewResult"))}</button>` : ""}
-            ${inv.status === "open" ? `<button class="btn btn-sm btn-danger" data-revoke="${esc(inv.token)}">${esc(t("revoke"))}</button>` : ""}
-            <button class="btn btn-sm btn-danger" data-del="${esc(inv.token)}">${esc(t("delete"))}</button>
+            ${isAdmin() && inv.status === "open" ? `<button class="btn btn-sm btn-danger" data-revoke="${esc(inv.token)}">${esc(t("revoke"))}</button>` : ""}
+            ${isAdmin() ? `<button class="btn btn-sm btn-danger" data-del="${esc(inv.token)}">${esc(t("delete"))}</button>` : ""}
           </td></tr>`).join("")}
       </tbody></table></div>`;
       $$("[data-copy]", listEl).forEach((b) => b.addEventListener("click", () => {
@@ -844,7 +852,7 @@
             <td><span class="badge" style="background:${s.level.color}">${esc(L(s.level))}</span></td>
             <td class="inline-actions">
               <button class="btn btn-sm btn-outline" data-view-id="${a.id}">${esc(t("view"))}</button>
-              <button class="btn btn-sm btn-danger" data-del-id="${a.id}">${esc(t("delete"))}</button>
+              ${isAdmin() ? `<button class="btn btn-sm btn-danger" data-del-id="${a.id}">${esc(t("delete"))}</button>` : ""}
             </td></tr>`;
         }).join("")}
       </tbody></table></div>`;
@@ -935,6 +943,55 @@
   }
 
   /* ---------------- Settings ---------------- */
+  /* ---------------- Users & roles (admin) ---------------- */
+  function renderUsers(v) {
+    const statusLbl = state.lang === "en" ? "Status" : "الحالة";
+    v.innerHTML =
+      `<div class="page-title"><h1>${esc(t("manageUsers"))}</h1></div>
+       <div class="card">
+         <h2>${esc(t("addUser"))}</h2>
+         <p class="muted">${esc(t("usersDesc"))}</p>
+         <div class="grid-4">
+           <div class="field"><label>${esc(t("userName"))}</label><input id="u-name"></div>
+           <div class="field"><label>${esc(t("userLogin"))}</label><input id="u-username"></div>
+           <div class="field"><label>${esc(t("userPass"))}</label><input id="u-pass" inputmode="numeric" autocomplete="off"></div>
+           <div class="field"><label>${esc(t("userRole"))}</label>
+             <select id="u-role"><option value="manager">${esc(t("roleManager"))}</option><option value="admin">${esc(t("roleAdmin"))}</option></select></div>
+         </div>
+         <button class="btn btn-primary" id="u-add">${esc(t("addUser"))}</button>
+       </div>
+       <div class="card"><h2>${esc(t("navUsers"))}</h2><div id="u-list"><div class="empty">${esc(t("loading"))}</div></div></div>`;
+    $("#u-add").addEventListener("click", async () => {
+      const payload = { name: $("#u-name").value.trim(), username: $("#u-username").value.trim(), passcode: $("#u-pass").value.trim(), role: $("#u-role").value };
+      if (!payload.passcode) { toast(t("required")); return; }
+      try { await S.addUser(payload); toast(t("accountAdded")); $("#u-name").value = $("#u-username").value = $("#u-pass").value = ""; loadUsers(); }
+      catch (e) { toast(e && e.message === "passcode_taken" ? (state.lang === "en" ? "Passcode already used" : "الرمز مستخدم مسبقاً") : t("saveFailed")); }
+    });
+    async function loadUsers() {
+      const el = $("#u-list");
+      let users = [];
+      try { users = await S.listUsers(); } catch (e) { el.innerHTML = `<div class="empty">${esc(t("noData"))}</div>`; return; }
+      const builtins = [
+        { name: state.lang === "en" ? "System admin (default)" : "مدير النظام (افتراضي)", username: "056023", role: "admin", builtin: true },
+        { name: state.lang === "en" ? "Manager (default)" : "مدير (افتراضي)", username: "1234", role: "manager", builtin: true },
+      ];
+      const rows = builtins.concat(users);
+      el.innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr>
+        <th>${esc(t("userName"))}</th><th>${esc(t("userLogin"))}</th><th>${esc(t("userRole"))}</th><th>${esc(statusLbl)}</th><th>${esc(t("actions"))}</th></tr></thead><tbody>
+        ${rows.map((u) => `<tr>
+          <td>${esc(u.name || "")}</td><td class="ltr">${esc(u.username || "")}</td>
+          <td>${u.role === "admin" ? esc(t("roleAdmin")) : esc(t("roleManager"))}</td>
+          <td>${u.builtin ? "—" : (u.active ? `<span class="badge" style="background:#16a34a">${esc(t("active"))}</span>` : `<span class="badge" style="background:#6b7280">${esc(t("deactivate"))}</span>`)}</td>
+          <td class="inline-actions">${u.builtin ? "" : `
+            <button class="btn btn-sm btn-outline" data-toggle="${esc(u.id)}">${u.active ? esc(t("deactivate")) : esc(t("activate"))}</button>
+            <button class="btn btn-sm btn-danger" data-del="${esc(u.id)}">${esc(t("delete"))}</button>`}</td></tr>`).join("")}
+      </tbody></table></div>`;
+      $$("[data-toggle]", el).forEach((b) => b.addEventListener("click", async () => { try { await S.toggleUser(b.dataset.toggle); } catch (e) {} loadUsers(); }));
+      $$("[data-del]", el).forEach((b) => b.addEventListener("click", async () => { if (!confirm(t("confirmDelete"))) return; try { await S.deleteUser(b.dataset.del); } catch (e) {} loadUsers(); }));
+    }
+    loadUsers();
+  }
+
   function renderSettings(v) {
     v.innerHTML =
       `<div class="page-title"><h1>${esc(t("settingsTitle"))}</h1></div>

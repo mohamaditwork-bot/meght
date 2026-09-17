@@ -98,6 +98,15 @@ async function createMysqlStore() {
 
   async function exec(sql, params) { const [r] = await pool.query(sql, params); return r; }
 
+  // mysql2 auto-parses JSON columns, so a stored string like "abc" comes back as
+  // the JS string "abc" (not '"abc"'). Only JSON.parse when the value is a string
+  // that is actually valid JSON; otherwise return it as-is.
+  function fromJson(v, fallback) {
+    if (v == null) return fallback;
+    if (typeof v === 'string') { try { return JSON.parse(v); } catch (e) { return v; } }
+    return v;
+  }
+
   return {
     kind: 'mysql',
     dataLocation: typeof cfg === 'string' ? cfg.replace(/:[^:@/]*@/, ':****@') : `${cfg.host}/${cfg.database}`,
@@ -113,8 +122,7 @@ async function createMysqlStore() {
       async get(key, fallback) {
         const rows = await exec('SELECT v FROM settings WHERE k=?', [key]);
         if (!rows.length) return fallback;
-        const v = rows[0].v;
-        return v == null ? fallback : (typeof v === 'string' ? JSON.parse(v) : v);
+        return fromJson(rows[0].v, fallback);
       },
       async set(key, value) {
         await exec('INSERT INTO settings (k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)', [key, JSON.stringify(value)]);
@@ -128,7 +136,7 @@ async function createMysqlStore() {
         await conn.beginTransaction();
         const [rows] = await conn.query('SELECT v FROM settings WHERE k=? FOR UPDATE', [key]);
         let cur = 0;
-        if (rows.length && rows[0].v != null) cur = Number(typeof rows[0].v === 'string' ? JSON.parse(rows[0].v) : rows[0].v) || 0;
+        if (rows.length && rows[0].v != null) cur = Number(fromJson(rows[0].v, 0)) || 0;
         const next = cur + 1;
         await conn.query('INSERT INTO settings (k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)', [key, JSON.stringify(next)]);
         await conn.commit();
