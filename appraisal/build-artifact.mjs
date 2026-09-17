@@ -29,8 +29,14 @@ const scripts = ['vendor/qrcode.js', 'js/data.js', 'js/i18n.js', 'js/scoring.js'
 
 const ribbon = '<div class="demo-ribbon" style="position:fixed;bottom:12px;inset-inline-start:12px;z-index:80;background:rgba(11,77,46,.92);color:#c5ead0;font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px">نسخة معاينة — البيانات تُحفظ في هذا المتصفح</div>';
 
+const fonts =
+`<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">`;
+
 const out =
 `<title>MAYSAN — تقييم الأداء</title>
+${fonts}
 <style>
 ${css}
 </style>

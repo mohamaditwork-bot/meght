@@ -2,16 +2,20 @@
    MIG HR Appraisal — styles (bilingual, RTL/LTR aware)
    ============================================================ */
 :root {
-  --teal:#0d4f4a; --teal-d:#093733; --green:#128a3f; --green-l:#22c55e;
-  --ink:#12211f; --muted:#5b6b67; --line:#e2e8e4; --bg:#f4f7f5;
-  --card:#ffffff; --shadow:0 2px 8px rgba(13,79,74,.08);
+  /* Unified MAYSAN green identity — matches the HR platform. */
+  --teal:#156835; --teal-d:#0B4D2E; --green:#1E883F; --green-l:#27A84E;
+  --gold:#C49A3A;
+  --brand-grad:linear-gradient(165deg,#0B4D2E 0%,#156835 100%);
+  --brand-grad-soft:linear-gradient(135deg,#156835 0%,#27A84E 100%);
+  --ink:#081C0F; --muted:#4A6B55; --line:#C8E4D2; --bg:#F3FAF5;
+  --card:#ffffff; --panel-2:#EAF7EE; --shadow:0 2px 8px rgba(8,28,15,.08);
   --radius:12px;
 }
 * { box-sizing:border-box; }
 html,body { margin:0; padding:0; }
 body {
-  font-family:"Segoe UI", Tahoma, "Traditional Arabic", Arial, sans-serif;
-  background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5;
+  font-family:'Tajawal','Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:15px; line-height:1.55;
 }
 .hidden { display:none !important; }
 .ltr { direction:ltr; unicode-bidi:isolate; display:inline-block; }
@@ -25,7 +29,7 @@ body {
 .btn { cursor:pointer; border:1px solid transparent; border-radius:8px; padding:9px 16px;
   font-size:14px; font-weight:600; font-family:inherit; transition:.15s; background:#eef2f0; color:var(--ink); }
 .btn:hover { filter:brightness(.97); }
-.btn-primary { background:linear-gradient(135deg,var(--teal),var(--green)); color:#fff; }
+.btn-primary { background:var(--brand-grad-soft); color:#fff; }
 .btn-primary:hover { filter:brightness(1.06); }
 .btn-ghost { background:transparent; border-color:transparent; color:#fff; }
 .btn-ghost:hover { background:rgba(255,255,255,.15); }
@@ -300,7 +304,7 @@ body {
    ============================================================ */
 .app{ display:flex; min-height:100vh; align-items:stretch; }
 .sidebar{ width:232px; flex:0 0 232px; align-self:flex-start; position:sticky; top:0; height:100vh;
-  background:linear-gradient(160deg,var(--teal-d),var(--teal) 55%,var(--green)); color:#eafff0;
+  background:var(--brand-grad); color:#eafff0;
   display:flex; flex-direction:column; box-shadow:-2px 0 16px rgba(0,0,0,.12); z-index:40; }
 .side-brand{ display:flex; align-items:center; gap:10px; padding:16px 16px 12px; border-bottom:1px solid rgba(255,255,255,.14); }
 .side-brand .brand-logo{ height:40px; background:#fff; border-radius:8px; padding:4px; }
