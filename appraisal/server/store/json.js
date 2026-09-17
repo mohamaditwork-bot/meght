@@ -65,6 +65,7 @@ function createJsonStore() {
     settings: {
       async get(key, fallback) { return key in db.settings ? clone(db.settings[key]) : fallback; },
       async set(key, value) { db.settings[key] = clone(value); persist(); return value; },
+      async all() { return clone(db.settings); },
     },
     async nextSeq(name) {
       const k = 'seq:' + name;
@@ -106,6 +107,25 @@ function createJsonStore() {
         persist(); return clone(db.invites[idx]);
       },
       async remove(token) { db.invites = db.invites.filter((i) => i.token !== token); persist(); },
+    },
+
+    // ---- Full backup / restore --------------------------------------------
+    async dumpAll() {
+      return {
+        appraisals: clone(db.appraisals),
+        performance: clone(db.performance_reviews),
+        invites: clone(db.invites),
+        settings: clone(db.settings),
+      };
+    },
+    async restoreAll(bundle) {
+      bundle = bundle || {};
+      db.appraisals = clone(bundle.appraisals || []);
+      db.performance_reviews = clone(bundle.performance || []);
+      db.invites = clone(bundle.invites || []);
+      db.settings = clone(bundle.settings || {});
+      persist();
+      return true;
     },
   };
 }

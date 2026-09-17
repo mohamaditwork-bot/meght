@@ -610,6 +610,55 @@ function detectPeriod(fileName) {
   return { value, label: `${monthNames[month - 1]} ${year}`, year, month, confident, asOf: `${value}-01` };
 }
 
+// ---- Full database backup / restore (admin only) -------------------------
+// One click downloads EVERYTHING — the HR platform data (employees, uploads,
+// snapshots, rules, users, audit…) AND the appraisal system data (appraisals,
+// performance reviews, invite links, settings/accounts) — as a single JSON
+// file. Uploading that file restores the exact state. This lets the admin take
+// a full snapshot of the live database before editing or redeploying the site,
+// so nothing is ever lost and everything can be brought back as it was.
+const appraisalGetStore = (() => {
+  try { const require = createRequire(import.meta.url); return require('./appraisal/server/store').getStore; }
+  catch { return null; }
+})();
+
+app.get('/api/backup', requirePerm('manage_users'), async (req, res) => {
+  try {
+    const bundle = {
+      app: 'maysan',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      exportedBy: req.session.user.username,
+      hr: store.dumpAll(),
+      appraisal: appraisalGetStore ? await (await appraisalGetStore()).dumpAll() : null,
+    };
+    try { store.appendAudit({ action: 'backup_download', actor: req.session.user.username, ip: ip(req) }); } catch {}
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="maysan-backup-${stamp}.json"`);
+    res.send(JSON.stringify(bundle));
+  } catch (e) {
+    res.status(500).json({ error: 'backup_failed', detail: String(e.message || e) });
+  }
+});
+
+// Restore accepts a large body (a full backup can exceed the default 4mb limit).
+app.post('/api/restore', requirePerm('manage_users'), express.json({ limit: '128mb' }), async (req, res) => {
+  try {
+    const bundle = req.body;
+    if (!bundle || typeof bundle !== 'object' || (!bundle.hr && !bundle.appraisal)) {
+      return res.status(400).json({ error: 'invalid_backup' });
+    }
+    let hrRestored = 0;
+    if (bundle.hr) hrRestored = store.restoreAll(bundle.hr).restored;
+    if (bundle.appraisal && appraisalGetStore) await (await appraisalGetStore()).restoreAll(bundle.appraisal);
+    try { store.appendAudit({ action: 'backup_restore', actor: req.session.user.username, detail: `استرجاع نسخة احتياطية (${hrRestored} عنصر)`, ip: ip(req) }); } catch {}
+    res.json({ ok: true, hrRestored });
+  } catch (e) {
+    res.status(500).json({ error: 'restore_failed', detail: String(e.message || e) });
+  }
+});
+
 // ---- Appraisal system (mounted sub-app) ----------------------------------
 // Performance-evaluation module + shareable manager evaluation links. It shares
 // this app's session (single sign-on: an HR login also unlocks appraisal admin)

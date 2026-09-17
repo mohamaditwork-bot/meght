@@ -128,6 +128,13 @@ async function createMysqlStore() {
         await exec('INSERT INTO settings (k,v) VALUES (?,?) ON DUPLICATE KEY UPDATE v=VALUES(v)', [key, JSON.stringify(value)]);
         return value;
       },
+      // Every settings row as one { key: value } object (used by full backup).
+      async all() {
+        const rows = await exec('SELECT k, v FROM settings', []);
+        const out = {};
+        for (const r of rows) out[r.k] = fromJson(r.v, null);
+        return out;
+      },
     },
     async nextSeq(name) {
       const key = 'seq:' + name;
@@ -221,6 +228,27 @@ async function createMysqlStore() {
         return next;
       },
       async remove(token) { await exec('DELETE FROM invites WHERE token=?', [token]); },
+    },
+
+    // ---- Full backup / restore --------------------------------------------
+    async dumpAll() {
+      return {
+        appraisals: await this.appraisals.list(),
+        performance: await this.performance.list(),
+        invites: await this.invites.list(),
+        settings: await this.settings.all(),
+      };
+    },
+    async restoreAll(bundle) {
+      bundle = bundle || {};
+      await exec('DELETE FROM appraisals', []);
+      await exec('DELETE FROM performance_reviews', []);
+      await exec('DELETE FROM invites', []);
+      for (const a of bundle.appraisals || []) if (a && a.id) await this.appraisals.save(a);
+      for (const p of bundle.performance || []) if (p && p.id) await this.performance.save(p);
+      for (const i of bundle.invites || []) if (i && i.token) await this.invites.create(i);
+      for (const [k, v] of Object.entries(bundle.settings || {})) await this.settings.set(k, v);
+      return true;
     },
   };
 }

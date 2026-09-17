@@ -229,6 +229,53 @@ export function saveClassifications(c) { writeJSON(F.classifications, c); }
 export function getLeaverReasons() { return readJSON(F.leavers, {}); }
 export function saveLeaverReasons(r) { writeJSON(F.leavers, r); }
 
+// ---- Full backup / restore ----------------------------------------------
+// dumpAll() returns EVERYTHING the HR store holds as one plain object, keyed by
+// logical document name (meta, users, audit, ... and snapshot:<id> for each
+// snapshot). restoreAll() writes such an object back, replacing current data.
+// Used by the admin one-click "Backup" (download) and "Restore" (upload).
+export function dumpAll() {
+  if (USE_DB) {
+    // mem is the authoritative in-memory cache in DB mode.
+    return JSON.parse(JSON.stringify(mem));
+  }
+  const out = {};
+  for (const [name, file] of Object.entries(F)) {
+    const v = readJSON(file, undefined);
+    if (v !== undefined) out[name] = v;
+  }
+  try {
+    for (const f of fs.readdirSync(SNAP_DIR)) {
+      if (!f.endsWith('.json')) continue;
+      const doc = readJSON(path.join(SNAP_DIR, f), undefined);
+      if (doc !== undefined) out['snapshot:' + path.basename(f, '.json')] = doc;
+    }
+  } catch {}
+  return out;
+}
+
+export function restoreAll(obj) {
+  if (!obj || typeof obj !== 'object') return { restored: 0 };
+  let n = 0;
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) continue;
+    if (key.startsWith('snapshot:')) {
+      const id = key.slice('snapshot:'.length);
+      if (USE_DB) dbWrite(key, value);
+      else writeJSON(path.join(SNAP_DIR, `${id}.json`), value);
+    } else if (F[key]) {
+      writeJSON(F[key], value);
+    } else if (USE_DB) {
+      // Unknown top-level key in DB mode — preserve it verbatim.
+      dbWrite(key, value);
+    } else {
+      writeJSON(path.join(ROOT, `${key}.json`), value);
+    }
+    n++;
+  }
+  return { restored: n };
+}
+
 // FILE mode: seed at module load so read-only/serverless hosts show demo data
 // immediately (matches the platform's original behavior).
 if (!USE_DB) seedFilesIfEmpty();
