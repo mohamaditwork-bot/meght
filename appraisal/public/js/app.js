@@ -66,6 +66,9 @@
   }
   async function enterApp() {
     try { await S.refresh(); } catch (e) {}
+    // Deep-link support: /evaluation#dashboard, #users, #links, ...
+    const h = (location.hash || "").replace(/^#\/?/, "");
+    if (["new", "performance", "links", "history", "dashboard", "users", "settings"].includes(h)) state.view = h;
     showApp();
   }
   function initLogin() {

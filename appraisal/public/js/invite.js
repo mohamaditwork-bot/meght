@@ -37,7 +37,7 @@
     return parts.length ? parts[parts.length - 1] : null;
   }
 
-  const BASE = '/appraisal'; // the appraisal app is mounted under /appraisal
+  const BASE = '/evaluation'; // the appraisal app is mounted under /appraisal
   async function req(method, url, body) {
     const opt = { method, headers: {} };
     if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }

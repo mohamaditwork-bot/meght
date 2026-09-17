@@ -9,7 +9,7 @@
    ============================================================= */
 (function () {
   const cache = { appraisals: [], performance: [], role: null };
-  const BASE = '/appraisal'; // the appraisal app is mounted under /appraisal
+  const BASE = '/evaluation'; // the appraisal app is mounted under /appraisal
 
   async function req(method, url, body) {
     const opt = { method, headers: {}, credentials: 'same-origin' };

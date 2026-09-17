@@ -618,13 +618,19 @@ function detectPeriod(fileName) {
 try {
   const require = createRequire(import.meta.url);
   const { createAppraisalApp } = require('./appraisal/server/app.cjs');
-  app.use('/appraisal', createAppraisalApp());
+  app.use('/evaluation', createAppraisalApp());
 } catch (e) { try { console.error('[appraisal] mount failed:', e.message); } catch {} }
 
-// ---- Static & SPA --------------------------------------------------------
+// ---- Unified routing -----------------------------------------------------
+// /            -> the unified portal (login + menu)
+// /hr[/...]    -> the HR platform SPA (hash-routed inside)
+// /evaluation  -> the appraisal system (mounted above)
+// Static assets (css/js/assets) are served by their own paths.
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'portal.html')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not_found' });
+  // Everything else (notably /hr and its deep links) is the HR SPA.
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

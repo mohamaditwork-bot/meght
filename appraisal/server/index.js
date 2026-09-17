@@ -6,11 +6,11 @@ const { createAppraisalApp } = require('./app.cjs');
 
 const app = express();
 app.disable('x-powered-by');
-app.use('/appraisal', createAppraisalApp());
-app.get('/', (req, res) => res.redirect('/appraisal/'));
+app.use('/evaluation', createAppraisalApp());
+app.get('/', (req, res) => res.redirect('/evaluation/'));
 app.get('/healthz', (req, res) => res.json({ ok: true }));
 
 const PORT = Number(process.env.PORT || 8090);
 app.listen(PORT, () => {
-  console.log(`MAYSAN appraisal (standalone) on http://localhost:${PORT}/appraisal/`);
+  console.log(`MAYSAN appraisal (standalone) on http://localhost:${PORT}/evaluation/`);
 });

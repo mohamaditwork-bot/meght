@@ -14,10 +14,10 @@ body = body.replace(/<script[\s\S]*?<\/script>/g, '');
 // Point the "الموارد البشرية" button at the HR platform's stable link (opens it
 // in a new tab from the preview). On the deployed server this stays "/".
 const HR_URL = 'https://claude.ai/artifact/Pa7iMKYVBA6zttXEtg6DTL';
-body = body.split('<a class="btn btn-ghost" href="/" title="الموارد البشرية">')
+body = body.split('<a class="btn btn-ghost" href="/hr" title="الموارد البشرية">')
   .join('<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + HR_URL + '" title="الموارد البشرية">');
 // swap logo asset references to the inlined data URI
-body = body.split('/appraisal/assets/logo.svg').join(logo);
+body = body.split('/evaluation/assets/logo.svg').join(logo);
 body = body.trim();
 
 const css = read('css/styles.css');
