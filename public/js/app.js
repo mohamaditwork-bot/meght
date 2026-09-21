@@ -88,22 +88,27 @@
  { id: 'contractors', key: 'n_contractors', perm: 'view_expiry', ico: 'shield' },
  ]},
  { gkey: 'nav_data', items: [
- { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale' },
- { id: 'jobmap', key: 'n_jobmap', perm: 'view_saudization', ico: 'briefcase' },
- { id: 'upload', key: 'n_upload', perm: 'upload_data', ico: 'arrow-up' },
- { id: 'history', key: 'n_uploads', perm: 'view_dashboard', ico: 'layers' },
- { id: 'audit', key: 'n_audit', perm: 'view_audit', ico: 'shield' },
- { id: 'users', key: 'n_users', perm: 'manage_users', ico: 'user' },
+ { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale', adminOnly: true },
+ { id: 'jobmap', key: 'n_jobmap', perm: 'view_saudization', ico: 'briefcase', adminOnly: true },
+ { id: 'upload', key: 'n_upload', perm: 'upload_data', ico: 'arrow-up', adminOnly: true },
+ { id: 'history', key: 'n_uploads', perm: 'view_dashboard', ico: 'layers', adminOnly: true },
+ { id: 'audit', key: 'n_audit', perm: 'view_audit', ico: 'shield', adminOnly: true },
+ { id: 'users', key: 'n_users', perm: 'manage_users', ico: 'user', adminOnly: true },
  ]},
  ];
  const T = (k) => (window.I18N ? window.I18N.t(k) : k);
  function can(perm) { return App.me && App.me.permissions.includes(perm); }
  window.can = can;
+ // The administrative machinery (upload, users, rules, mapping, audit, upload
+ // history) is hidden from non-administrators so their view stays clean and
+ // simple — they only see the dashboards, reports and data they may consult.
+ function isAdminUser() { return can('manage_users'); }
+ function navAllowed(i) { return can(i.perm) && (!i.adminOnly || isAdminUser()); }
 
  function renderNav() {
  const nav = $('#nav'); nav.innerHTML = '';
  NAV.forEach((g) => {
- const items = g.items.filter((i) => can(i.perm));
+ const items = g.items.filter(navAllowed);
  if (!items.length) return;
  const gEl = document.createElement('div'); gEl.className = 'nav-group';
  gEl.innerHTML = `<div class="nav-group-t">${fmt.esc(T(g.gkey))}</div>`;
@@ -179,9 +184,9 @@
  renderFilters();
  const content = $('#content');
  if (Chart) Chart.disposeAll();
- // permission gate
+ // permission gate (also blocks direct #/upload etc. for non-admins)
  const navItem = NAV.flatMap((g) => g.items).find((i) => i.id === page);
- if (navItem && !can(navItem.perm)) { content.innerHTML = accessDenied(); return; }
+ if (navItem && !navAllowed(navItem)) { content.innerHTML = accessDenied(); return; }
  content.innerHTML = '<div class="spinner"></div>';
  try {
  if (page === 'employee') return Pages.employee(content, param);

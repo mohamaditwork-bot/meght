@@ -17,7 +17,7 @@ function createAppraisalApp() {
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.PORT || 8090);
-const ADMIN_PIN = String(process.env.APPRAISAL_ADMIN_PIN || '056023');
+const ADMIN_PIN = String(process.env.APPRAISAL_ADMIN_PIN || '0560239005');
 const STAFF_PIN = String(process.env.APPRAISAL_STAFF_PIN || '1234');
 
 // ---- Session (signed cookie) --------------------------------------------

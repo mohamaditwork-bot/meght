@@ -15,6 +15,18 @@ export const PERMISSIONS = [
 
 export const ROLES = {
   admin: { label: 'Admin — مدير النظام', permissions: [...PERMISSIONS] },
+  // Leadership (General Manager / HR Manager): can SEE everything across the
+  // platform (all dashboards, reports, employees, salary, saudization, expiry…)
+  // and export/print — but NONE of the administrative machinery (no Excel
+  // upload, no user management, no rule/mapping editing, no deletes). This keeps
+  // their view clean and simple. Used for both المدير العام and مدير الموارد البشرية.
+  executive: {
+    label: 'قيادة — اطّلاع شامل (GM / HR Manager)',
+    permissions: ['view_dashboard', 'view_workforce', 'view_saudization', 'view_nationality',
+      'view_departments', 'view_jobtitles', 'view_leave', 'view_expiry', 'view_employees',
+      'view_movements', 'view_comparison', 'view_salary', 'view_insights',
+      'view_reports', 'export_reports'],
+  },
   hr_manager: {
     label: 'HR Manager — مدير الموارد البشرية',
     permissions: PERMISSIONS.filter((p) => p !== 'manage_users'),
@@ -58,32 +70,67 @@ export function verifySecret(secret, stored) {
 // Default passcode is stored HASHED, never in plaintext / front-end. Username
 // and passcode are configurable via env but default to the official account so
 // login is IDENTICAL locally and after deployment.
-const DEFAULT_USERNAME = process.env.HR_ADMIN_USERNAME || 'mohamad.hr';
-const DEFAULT_PASSCODE = process.env.HR_ADMIN_PASSCODE || '056023';
-const DEFAULT_NAME = process.env.HR_ADMIN_NAME || 'الموارد البشرية';
+const DEFAULT_USERNAME = process.env.HR_ADMIN_USERNAME || 'mohammed.almutahhar';
+const DEFAULT_PASSCODE = process.env.HR_ADMIN_PASSCODE || '0560239005';
+const DEFAULT_NAME = process.env.HR_ADMIN_NAME || 'محمد المطهر';
+// Passcodes that older builds shipped as the admin default. When the stored
+// admin is still on one of these, seeding rotates it to the new passcode so the
+// old code stops working after this change.
+const RETIRED_ADMIN_PASSCODES = ['056023'];
 
-function makeAdmin() {
+// Leadership accounts seeded automatically: General Manager & HR Manager. They
+// get the `executive` role (see full everything, but no upload / user-management
+// / rule editing / deletes). Passcodes are overridable via env.
+const LEADERSHIP = [
+  { id: 'gm_nawaf', username: 'nawaf.gm', name: 'نواف غبان', role: 'executive', passcode: process.env.GM_PASSCODE || '0507575747' },
+  { id: 'hrm_majed', username: 'majed.hr', name: 'ماجد', role: 'executive', passcode: process.env.HRM_PASSCODE || '05959222959' },
+];
+
+function makeUser(u) {
   return {
-    id: 'admin', username: DEFAULT_USERNAME, name: DEFAULT_NAME,
-    role: 'admin', secret: hashSecret(DEFAULT_PASSCODE),
-    createdAt: new Date().toISOString(), active: true,
-    failedAttempts: 0, lockedUntil: null,
+    id: u.id, username: u.username, name: u.name, role: u.role,
+    secret: hashSecret(u.passcode), createdAt: new Date().toISOString(),
+    active: true, failedAttempts: 0, lockedUntil: null,
   };
+}
+function makeAdmin() {
+  return makeUser({ id: 'admin', username: DEFAULT_USERNAME, name: DEFAULT_NAME, role: 'admin', passcode: DEFAULT_PASSCODE });
 }
 
 function safeSave(store) { try { saveUsers(store); } catch (e) { /* read-only FS: keep working in-memory */ } }
 
+// Add the leadership accounts if they are not already present (idempotent).
+function ensureLeadership(store) {
+  let changed = false;
+  for (const L of LEADERSHIP) {
+    if (!store.users.some((u) => u.username === L.username || u.id === L.id)) {
+      store.users.push(makeUser(L)); changed = true;
+    }
+  }
+  return changed;
+}
+
 export function ensureSeeded() {
   let store = getUsers();
   if (store && store.users && store.users.length) {
-    // Keep the primary admin username in sync with the configured account.
+    let changed = false;
     const admin = store.users.find((u) => u.role === 'admin');
-    if (admin && admin.username !== DEFAULT_USERNAME && !process.env.HR_ADMIN_USERNAME_LOCKED) {
-      admin.username = DEFAULT_USERNAME; safeSave(store);
+    if (admin && !process.env.HR_ADMIN_USERNAME_LOCKED) {
+      // Keep the primary admin username/name in sync with the configured account.
+      if (admin.username !== DEFAULT_USERNAME) { admin.username = DEFAULT_USERNAME; changed = true; }
+      if (admin.name !== DEFAULT_NAME && (admin.name === 'الموارد البشرية' || !admin.name)) { admin.name = DEFAULT_NAME; changed = true; }
+      // Retire the old default passcode: if the admin is still on a shipped
+      // default, rotate to the new passcode so the previous code stops working.
+      if (RETIRED_ADMIN_PASSCODES.some((p) => verifySecret(p, admin.secret))) {
+        admin.secret = hashSecret(DEFAULT_PASSCODE); admin.name = DEFAULT_NAME; changed = true;
+      }
     }
+    if (ensureLeadership(store)) changed = true;
+    if (changed) safeSave(store);
     return store;
   }
   store = { users: [makeAdmin()] };
+  ensureLeadership(store);
   safeSave(store);
   return store;
 }
