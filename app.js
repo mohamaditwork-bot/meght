@@ -71,11 +71,11 @@ const ip = (req) => (req.headers['x-forwarded-for'] || req.socket.remoteAddress 
 // Single universal passcode (no user accounts needed). The correct passcode
 // grants full admin. This runs FIRST and depends on nothing that can throw, so
 // login can never fail with a false "wrong passcode" after deployment.
-const ADMIN_PASSCODE = process.env.HR_ADMIN_PASSCODE || '056023';
+const ADMIN_PASSCODE = process.env.HR_ADMIN_PASSCODE || '0560239005';
 function adminUser() {
   return auth.publicUser({
-    id: 'admin', username: process.env.HR_ADMIN_USERNAME || 'mohamad.hr',
-    name: process.env.HR_ADMIN_NAME || 'الموارد البشرية', role: 'admin',
+    id: 'admin', username: process.env.HR_ADMIN_USERNAME || 'mohammed.almutahhar',
+    name: process.env.HR_ADMIN_NAME || 'محمد المطهر', role: 'admin',
   });
 }
 app.post('/api/login', (req, res) => {

@@ -13,6 +13,6 @@ app.listen(PORT, () => {
   console.log('  ✅ MAYSAN INT. GROUP — HR Intelligence Platform + Appraisal');
   console.log(`  🌐  http://localhost:${PORT}`);
   console.log(`  🗄️   storage backend: ${backend}`);
-  console.log(`  🔑  رمز الدخول الافتراضي: ${process.env.HR_ADMIN_PASSCODE || '056023'}`);
+  console.log(`  🔑  رمز مدير النظام الافتراضي: ${process.env.HR_ADMIN_PASSCODE || '0560239005'}`);
   console.log('');
 });
