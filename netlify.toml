@@ -1,0 +1,32 @@
+# Netlify deployment config — MAYSAN INT. GROUP · الموارد البشرية
+#
+# The platform runs FULLY CLIENT-SIDE: the same analytics/upload engine that
+# powers the standalone build executes in the browser (window.clientApi +
+# window.HR), and the data you upload is stored in the browser (localStorage).
+#
+# Why: a serverless function's disk is ephemeral and per-invocation, so uploaded
+# Excel data would not survive between requests — the dashboard would snap back
+# to the seed. Serving the self-contained client build makes the deployed site
+# behave IDENTICALLY to local and to the shared artifact:
+#   • every Excel you upload fully REPLACES the data across all pages,
+#   • it PERSISTS across reloads (per browser),
+#   • it updates everything — dashboard, saudization, expiry, contractors,
+#     and even employee search.
+# There is no server dependency, so login is identical everywhere (passcode
+# 056023) and printing works natively.
+
+[build]
+  publish = "dist"
+  # Assemble the self-contained client app from committed sources (no npm
+  # install needed — the shim bundle and vendored libs are committed) and
+  # publish it as the site index.
+  command = "node web/build-standalone.mjs && rm -rf dist && mkdir -p dist && cp web/standalone.html dist/index.html"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# The app uses hash routing; serve index.html for every path so deep links work.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

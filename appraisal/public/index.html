@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maysan International Group — مجموعة ميسان الدولية</title>
+  <link rel="icon" href="/evaluation/assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/evaluation/css/styles.css" />
+</head>
+<body>
+  <!-- Login gate -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <img src="/evaluation/assets/logo.svg" class="login-logo" alt="Maysan International Group" />
+      <div class="login-lang">
+        <button data-lang="ar" class="lang-btn">العربية</button>
+        <button data-lang="en" class="lang-btn">English</button>
+      </div>
+      <h1 id="login-title">دخول آمن</h1>
+      <p id="login-subtitle" class="muted">أدخل الرمز السرّي أو كلمة المرور للمتابعة</p>
+      <form id="login-form">
+        <label id="pin-label" for="pin-input">الرمز السرّي / كلمة المرور</label>
+        <input id="pin-input" type="password" autocomplete="current-password" inputmode="numeric" />
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block">دخول</button>
+        <div id="login-error" class="error hidden"></div>
+      </form>
+      <p id="login-hint" class="hint"></p>
+    </div>
+  </div>
+
+  <!-- App shell: vertical sidebar + main column -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
+        <img src="/evaluation/assets/logo.svg" class="brand-logo" alt="Maysan International Group" />
+        <div class="brand-text">
+          <strong id="brand-title"></strong>
+          <span id="brand-tag" class="muted"></span>
+        </div>
+      </div>
+      <nav class="mainnav" id="mainnav"></nav>
+      <div class="side-actions">
+        <a class="btn btn-ghost" href="/hr" title="الموارد البشرية">🏠 الموارد البشرية</a>
+        <button id="lang-toggle" class="btn btn-ghost" title="Language"></button>
+        <button id="logout-btn" class="btn btn-ghost"></button>
+      </div>
+    </aside>
+    <div class="main-col">
+      <header class="topbar mobile-bar">
+        <button id="menu-btn" class="menu-btn" aria-label="Menu">☰</button>
+        <div class="mobile-brand">
+          <img src="/evaluation/assets/logo.svg" class="brand-logo" alt="MG" />
+          <strong>MAYSAN · التقييم</strong>
+        </div>
+      </header>
+      <main id="view" class="view"></main>
+      <footer class="appfoot">
+        <span>Maysan International Group · مجموعة ميسان الدولية</span>
+      </footer>
+    </div>
+    <div class="side-backdrop" id="side-backdrop"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/evaluation/vendor/qrcode.js"></script>
+  <script src="/evaluation/js/data.js"></script>
+  <script src="/evaluation/js/i18n.js"></script>
+  <script src="/evaluation/js/scoring.js"></script>
+  <script src="/evaluation/js/scorectl.js"></script>
+  <script src="/evaluation/js/sigpad.js"></script>
+  <script src="/evaluation/js/api.js"></script>
+  <script src="/evaluation/js/report.js"></script>
+  <script src="/evaluation/js/export.js"></script>
+  <script src="/evaluation/js/vendor/echarts.min.js"></script>
+  <script src="/evaluation/js/app.js"></script>
+</body>
+</html>

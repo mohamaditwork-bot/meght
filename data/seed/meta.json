@@ -1,0 +1,20 @@
+{
+  "snapshots": [
+    {
+      "id": "0f6b162e-106a-4e61-b83c-e611641835ab",
+      "period": "2026-09",
+      "periodLabel": "سبتمبر 2026",
+      "asOf": "2026-09-09",
+      "fileName": "HR_Current.xlsx",
+      "uploadedAt": "2026-09-09T15:02:24.019Z",
+      "committedAt": "2026-09-09T15:02:24.019Z",
+      "uploadedBy": "admin",
+      "employeeCount": 96,
+      "saudiPct": 39.58333333333333,
+      "payroll": 353526,
+      "qualityScore": 100,
+      "status": "committed"
+    }
+  ],
+  "activeSnapshotId": "0f6b162e-106a-4e61-b83c-e611641835ab"
+}
