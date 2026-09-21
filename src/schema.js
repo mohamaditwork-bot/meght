@@ -117,13 +117,24 @@ export const CORE_FIELDS = [
       'تاريخ انتهاء الجواز', 'انتهاء جواز السفر', 'الجواز'],
   },
   {
+    // Location / branch / city. The geographic dimension the workforce belongs
+    // to (e.g. المدينة, مكة). Drives the "الموقع" filter and per-location reports.
+    key: 'location', label: 'Location Arabic Name', labelAr: 'الموقع / المدينة',
+    type: FIELD_TYPES.STRING,
+    aliases: ['location arabic name', 'location', 'site', 'site name', 'city', 'branch',
+      'الموقع', 'المدينة', 'الفرع', 'الموقع الجغرافي', 'اسم الموقع', 'المنطقة', 'موقع العمل'],
+  },
+  {
     // Contractor / labor-supply company. When present the employee belongs to an
     // external contracted company; when empty the employee is a DIRECT employee.
-    key: 'contractor', label: 'Location Arabic Name', labelAr: 'الشركة المتعاقدة / الموقع',
+    // NOTE: only genuine company/contractor columns map here — a location/city
+    // column maps to `location` above, so employees are not mislabeled as
+    // contractors merely for having a work location.
+    key: 'contractor', label: 'Contractor Company', labelAr: 'الشركة المتعاقدة',
     type: FIELD_TYPES.STRING,
-    aliases: ['location arabic name', 'location', 'site', 'site code', 'company', 'company name',
-      'contractor', 'contractor name', 'كود الموقع', 'اسم الشركة', 'الشركة', 'الموقع',
-      'الشركة المتعاقدة', 'اسم الموقع', 'المقاول', 'شركة التوريد'],
+    aliases: ['company', 'company name', 'company arabic name', 'contractor', 'contractor name',
+      'subcontractor', 'labor supply', 'labour supply', 'manpower', 'اسم الشركة', 'الشركة',
+      'الشركة المتعاقدة', 'المقاول', 'شركة التوريد', 'شركة المقاولة', 'جهة التعاقد'],
   },
 ];
 

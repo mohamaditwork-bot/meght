@@ -15,7 +15,7 @@
       quality: 'جودة', language: 'اللغة', theme: 'المظهر', light: 'فاتح', dark: 'داكن',
       print: 'طباعة', export_excel: 'تصدير Excel', preview_print: 'معاينة وطباعة',
       all_hotels: 'كل الفنادق', hotel: 'الفندق', hotels: 'الفنادق',
-      f_all: 'الكل', f_period: 'الفترة', f_dept: 'القسم', f_position: 'المسمى',
+      f_all: 'الكل', f_period: 'الفترة', f_dept: 'القسم', f_position: 'المسمى', f_location: 'الموقع / المدينة',
       f_nationality: 'الجنسية', f_level: 'الدرجة', f_gender: 'الجنس', f_class: 'التصنيف',
       f_male: 'ذكر', f_female: 'أنثى', f_saudi: 'سعودي', f_nonsaudi: 'غير سعودي', f_reset: 'مسح الفلاتر',
       // nav groups
@@ -41,7 +41,7 @@
       quality: 'Quality', language: 'Language', theme: 'Theme', light: 'Light', dark: 'Dark',
       print: 'Print', export_excel: 'Export Excel', preview_print: 'Preview & Print',
       all_hotels: 'All hotels', hotel: 'Hotel', hotels: 'Hotels',
-      f_all: 'All', f_period: 'Period', f_dept: 'Department', f_position: 'Job Title',
+      f_all: 'All', f_period: 'Period', f_dept: 'Department', f_position: 'Job Title', f_location: 'Location / City',
       f_nationality: 'Nationality', f_level: 'Level', f_gender: 'Gender', f_class: 'Classification',
       f_male: 'Male', f_female: 'Female', f_saudi: 'Saudi', f_nonsaudi: 'Non-Saudi', f_reset: 'Clear filters',
       nav_overview: 'Overview', nav_workforce: 'Workforce', nav_compliance: 'Compliance',

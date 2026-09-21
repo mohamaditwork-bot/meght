@@ -16,6 +16,7 @@ export function applyFilters(records, q = {}) {
   let out = records;
   const eq = (key, val) => { if (val) out = out.filter((r) => String(r[key] ?? '').trim() === String(val).trim()); };
   eq('division', q.division);
+  eq('location', q.location);
   eq('section', q.department || q.section);
   eq('position', q.position);
   eq('nationality', q.nationality);
@@ -45,7 +46,7 @@ export function applyFilters(records, q = {}) {
 export function filterOptions(records) {
   const set = (key) => [...new Set(records.map((r) => (r[key] == null ? '' : String(r[key]).trim())).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ar'));
   return {
-    division: set('division'), department: set('section'), position: set('position'),
+    division: set('division'), location: set('location'), department: set('section'), position: set('position'),
     nationality: set('nationality'), level: set('level_code'),
     gender: set('gender'),
   };

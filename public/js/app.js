@@ -143,6 +143,7 @@
  bar.innerHTML =
  sel('period', T('f_period'), snaps.map((s) => ({ id: s.id, label: s.periodLabel || s.period })), true) +
  sel('division', T('hotel'), o.division) +
+ ((o.location && o.location.length) ? sel('location', T('f_location'), o.location) : '') +
  sel('department', T('f_dept'), o.department) +
  sel('position', T('f_position'), o.position) +
  sel('nationality', T('f_nationality'), o.nationality) +
@@ -156,7 +157,7 @@
  $('#filterReset').addEventListener('click', () => { App.filters = {}; renderFilters(); renderActiveFilters(); route(); });
  renderActiveFilters();
  }
- const FILTER_LABELS = { period: 'f_period', division: 'hotel', department: 'f_dept', position: 'f_position', nationality: 'f_nationality', level: 'f_level', gender: 'f_gender', saudi: 'f_class' };
+ const FILTER_LABELS = { period: 'f_period', division: 'hotel', location: 'f_location', department: 'f_dept', position: 'f_position', nationality: 'f_nationality', level: 'f_level', gender: 'f_gender', saudi: 'f_class' };
  function renderActiveFilters() {
  const el = $('#activeFilters'); const active = Object.entries(App.filters).filter(([k, v]) => v && k !== 'period');
  if (!active.length || App.currentRoute === 'upload') { el.innerHTML = ''; return; }

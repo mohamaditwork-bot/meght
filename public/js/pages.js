@@ -166,10 +166,12 @@
  ${kpi({ label: 'الجنسيات', value: fmt.n(d.nationalities), accent: 'green', ico: 'globe' })}
  ${kpi({ label: 'الدرجات', value: fmt.n(d.levels), accent: 'teal', ico: 'layers' })}
  ${kpi({ label: 'المنشآت', value: fmt.n(d.divisions), accent: 'teal', ico: 'building' })}
+ ${(wf.byLocation && wf.byLocation.length > 1) ? kpi({ label: 'المواقع', value: fmt.n(wf.byLocation.length), accent: 'green', ico: 'globe' }) : ''}
  </div>
  <div class="grid g-2">
  ${panel('التوزيع حسب القسم (سعودي / غير سعودي)', 'chSecStack', { chartCls: 'lg', sub: 'اضغط شريطاً للتصفية' })}
  ${panel('التوزيع حسب المسمى الوظيفي', 'chPos', { chartCls: 'lg' })}
+ ${(wf.byLocation && wf.byLocation.length > 1) ? panel('التوزيع حسب الموقع / المدينة', 'chLoc', { chartCls: 'lg', sub: 'اضغط شريطاً للتصفية' }) : ''}
  ${panel('التوزيع حسب الجنسية', 'chNat')}
  ${panel('التوزيع حسب الدرجة الوظيفية', 'chLvl')}
  ${panel('خريطة الأقسام (Treemap)', 'chTree', { chartCls: 'lg' })}
@@ -187,6 +189,12 @@
  inst && inst.on('click', (p) => { App.filters.department = sec[p.dataIndex]?.key; window.route(); });
  const pos = wf.byPosition.slice(0, 12);
  Chart.barH(el('chPos'), pos.map((g) => g.key), pos.map((g) => g.total), { showLabel: true, labelWidth: 130 });
+ if (wf.byLocation && wf.byLocation.length > 1 && el('chLoc')) {
+ const loc = wf.byLocation.slice(0, 12);
+ Chart.barH(el('chLoc'), loc.map((g) => g.key), loc.map((g) => g.total), { showLabel: true, labelWidth: 140 });
+ const li = echarts.getInstanceByDom(el('chLoc'));
+ li && li.on('click', (p) => { App.filters.location = loc[p.dataIndex]?.key; window.route(); });
+ }
  Chart.donut(el('chNat'), wf.byNationality.slice(0, 10).map((g) => ({ name: g.key, value: g.total })));
  Chart.barV(el('chLvl'), wf.byLevel.map((g) => g.key), wf.byLevel.map((g) => g.total));
  Chart.treemap(el('chTree'), wf.bySection.map((g) => ({ name: g.key, value: g.total })));
@@ -468,7 +476,7 @@
  <div class="e-tags"><span class="t">${fmt.esc(e.position || '—')}</span><span class="t">${fmt.esc(e.section || '—')}</span><span class="t">${e.is_saudi ? 'سعودي' : 'غير سعودي'}</span><span class="t">درجة ${fmt.esc(e.level_code || '—')}</span></div></div></div>
  <div class="grid g-2">
  <div class="panel"><div class="panel-head"><h3>البيانات الأساسية</h3></div><div class="panel-body"><div class="info-grid">
- ${infoCell('المنشأة', e.division)}${infoCell('القسم', e.section)}${infoCell('المسمى', e.position)}${infoCell('الدرجة', e.level_code)}
+ ${infoCell('المنشأة', e.division)}${e.location ? infoCell('الموقع / المدينة', e.location) : ''}${infoCell('القسم', e.section)}${infoCell('المسمى', e.position)}${infoCell('الدرجة', e.level_code)}
  ${infoCell('الجنسية', e.nationality)}${infoCell('الجنس', e.gender)}
  ${infoCell('الشركة المتعاقدة', e.is_contractor ? e.contractor : 'لا ينطبق – N/A')}
  ${r.canSalary ? infoCell('الراتب', fmt.moneyPlain(e.total_salary)) : ''}

@@ -153,6 +153,7 @@ app.get('/api/workforce', requirePerm('view_workforce'), (req, res) => {
     byGender: groupBy(ds.records, 'gender', ds.asOf),
     byLevel: groupBy(ds.records, 'level_code', ds.asOf),
     byDivision: groupBy(ds.records, 'division', ds.asOf),
+    byLocation: groupBy(ds.records, 'location', ds.asOf),
     kpis: computeKPIs(ds.records, ds.asOf),
   });
 });
@@ -313,7 +314,7 @@ app.get('/api/employee/:code', requirePerm('view_employees'), (req, res) => {
 
 function slimEmployee(r) {
   return { employee_code: r.employee_code, name: r.name, arabic_name: r.arabic_name,
-    section: r.section, position: r.position, division: r.division, level_code: r.level_code,
+    section: r.section, position: r.position, division: r.division, location: r.location, level_code: r.level_code,
     nationality: r.nationality, gender: r.gender, is_saudi: r.is_saudi,
     contractor: r.contractor, is_contractor: r.is_contractor,
     end_annual_balance: r.end_annual_balance, end_holiday_balance: r.end_holiday_balance,
