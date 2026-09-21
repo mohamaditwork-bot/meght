@@ -40,17 +40,6 @@
     .whoami{ color:var(--muted); font-size:13px; }
     .logout{ background:none; border:1px solid var(--line); color:#C0392B; border-radius:10px; padding:7px 14px; font-family:inherit; font-weight:700; cursor:pointer; }
     .foot{ text-align:center; color:var(--muted); font-size:12px; margin-top:34px; }
-    /* backup card */
-    .backup{ margin-top:22px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 22px; box-shadow:0 2px 10px rgba(8,28,15,.05); }
-    .backup h3{ margin:0 0 4px; font-size:16px; color:var(--teal-800); display:flex; align-items:center; gap:8px; }
-    .backup p{ margin:0 0 14px; color:var(--muted); font-size:13px; line-height:1.7; }
-    .backup .btns{ display:flex; gap:12px; flex-wrap:wrap; }
-    .bbtn{ appearance:none; border:none; border-radius:12px; padding:12px 20px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
-    .bbtn.dl{ background:var(--grad-soft); color:#fff; }
-    .bbtn.up{ background:#fff; color:var(--teal-800); border:1.5px solid var(--green-500); }
-    .bbtn:disabled{ opacity:.55; cursor:default; }
-    .bmsg{ margin-top:12px; font-size:13px; font-weight:600; min-height:18px; }
-    .bmsg.ok{ color:var(--green-600); } .bmsg.bad{ color:#C0392B; }
     [hidden]{ display:none !important; }
   </style>
 </head>
@@ -79,21 +68,7 @@
       </div>
       <div class="menu">
         <a class="tile" href="/hr"><div class="ico">🏢</div><h3>الموارد البشرية</h3><p>بيانات الموظفين، السعودة، الإقامات، الشركات المتعاقدة، ورفع ملف الإكسل.</p></a>
-        <a class="tile" href="/evaluation"><div class="ico">📝</div><h3>تقييم الأداء</h3><p>إنشاء التقييمات، روابط المدير، والسجل — مربوطة ببيانات الموظفين.</p></a>
-        <a class="tile" href="/evaluation#dashboard"><div class="ico">📊</div><h3>التقارير والتحليلات</h3><p>لوحة Power BI: مؤشرات ورسوم وفلاتر، وتصدير Excel.</p></a>
-        <a class="tile" href="/evaluation#users"><div class="ico">⚙️</div><h3>الإعدادات والمستخدمون</h3><p>إدارة الحسابات والصلاحيات وإعدادات النظام.</p></a>
-      </div>
-
-      <!-- Full database backup / restore (admin only) -->
-      <div class="backup" id="backupCard" hidden>
-        <h3>🛡️ النسخ الاحتياطي لقاعدة البيانات</h3>
-        <p>احفظ نسخة كاملة من كل البيانات (الموارد البشرية + تقييم الأداء) في ملف واحد قبل أي تعديل على الموقع. عند الحاجة ارفع الملف لاسترجاع كل شيء كما كان. ملاحظة: على Railway قاعدة البيانات خدمة منفصلة، فإعادة نشر الكود لا تحذف بياناتك.</p>
-        <div class="btns">
-          <button class="bbtn dl" id="btnBackup">⬇️ حفظ نسخة احتياطية</button>
-          <button class="bbtn up" id="btnRestore">⬆️ استرجاع من ملف</button>
-          <input type="file" id="restoreFile" accept="application/json,.json" hidden />
-        </div>
-        <div class="bmsg" id="bmsg"></div>
+        <a class="tile" href="/evaluation"><div class="ico">📝</div><h3>تقييم الأداء</h3><p>إنشاء التقييمات، روابط المدير، والتقارير — مربوطة ببيانات الموظفين.</p></a>
       </div>
     </div>
 
@@ -106,8 +81,6 @@
     function show(authed, role){
       $('#login').hidden = authed; $('#menu').hidden = !authed;
       if (authed) $('#whoami').textContent = 'مسجّل الدخول' + (role ? ' · ' + (role==='admin'?'مدير النظام':'مدير') : '');
-      // Backup/restore is for the system administrator only.
-      var card = $('#backupCard'); if (card) card.hidden = !(authed && role === 'admin');
     }
     fetch('/api/me', { credentials:'same-origin' })
       .then(function(r){ return r.ok ? r.json() : null; })
@@ -124,41 +97,6 @@
     });
     $('#logout').addEventListener('click', function(){
       fetch('/api/logout', { method:'POST', credentials:'same-origin' }).then(function(){ show(false); });
-    });
-
-    // ---- Backup (download) ----
-    function bmsg(txt, ok){ var el=$('#bmsg'); el.textContent=txt||''; el.className='bmsg'+(txt?(ok?' ok':' bad'):''); }
-    $('#btnBackup').addEventListener('click', function(){
-      var b=$('#btnBackup'); b.disabled=true; bmsg('جارٍ تجهيز النسخة…', true);
-      fetch('/api/backup', { credentials:'same-origin' })
-        .then(function(r){ if(!r.ok) throw new Error('backup'); return r.blob(); })
-        .then(function(blob){
-          var url=URL.createObjectURL(blob), a=document.createElement('a');
-          var stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-          a.href=url; a.download='maysan-backup-'+stamp+'.json'; document.body.appendChild(a); a.click();
-          a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-          bmsg('✓ تم حفظ النسخة الاحتياطية. احتفظ بالملف في مكان آمن.', true);
-        })
-        .catch(function(){ bmsg('تعذّر إنشاء النسخة الاحتياطية.', false); })
-        .then(function(){ b.disabled=false; });
-    });
-
-    // ---- Restore (upload) ----
-    $('#btnRestore').addEventListener('click', function(){ $('#restoreFile').click(); });
-    $('#restoreFile').addEventListener('change', function(e){
-      var file=e.target.files && e.target.files[0]; if(!file) return;
-      if(!confirm('سيتم استبدال كل البيانات الحالية بمحتوى الملف. هل أنت متأكد؟')){ e.target.value=''; return; }
-      var b=$('#btnRestore'); b.disabled=true; bmsg('جارٍ الاسترجاع…', true);
-      var reader=new FileReader();
-      reader.onload=function(){
-        var bundle; try { bundle=JSON.parse(reader.result); } catch(err){ bmsg('الملف غير صالح.', false); b.disabled=false; e.target.value=''; return; }
-        fetch('/api/restore', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body: JSON.stringify(bundle) })
-          .then(function(r){ if(!r.ok) throw new Error('restore'); return r.json(); })
-          .then(function(){ bmsg('✓ تم استرجاع البيانات بنجاح.', true); })
-          .catch(function(){ bmsg('تعذّر استرجاع الملف. تأكد أنه ملف نسخة احتياطية صحيح.', false); })
-          .then(function(){ b.disabled=false; e.target.value=''; });
-      };
-      reader.readAsText(file);
     });
   </script>
 </body>

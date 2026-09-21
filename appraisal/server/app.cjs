@@ -55,9 +55,17 @@ function parseCookies(req) {
   return out;
 }
 async function currentRole(req) {
-  // Single sign-on: if the HR platform (parent app) has an authenticated user,
-  // treat them as an appraisal admin.
-  if (req.session && req.session.user) return 'admin';
+  // Single sign-on & unified permissions: any user created in the HR platform
+  // automatically works in the appraisal system with a matching role. The HR
+  // session carries the user's role and permission list; an HR administrator
+  // (or anyone who can manage users) becomes an appraisal admin, everyone else
+  // is an appraisal manager (create & view, but no deletes / account management).
+  const u = req.session && req.session.user;
+  if (u) {
+    const perms = Array.isArray(u.permissions) ? u.permissions : [];
+    const isAdmin = u.role === 'admin' || perms.includes('manage_users');
+    return isAdmin ? 'admin' : 'manager';
+  }
   const s = await readToken(parseCookies(req).mig_sess);
   return s ? s.role : null;
 }
