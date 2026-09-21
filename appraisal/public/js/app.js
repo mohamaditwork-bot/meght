@@ -948,7 +948,20 @@
          </div>
          <button class="btn btn-primary" id="u-add">${esc(t("addUser"))}</button>
        </div>
-       <div class="card"><h2>${esc(t("navUsers"))}</h2><div id="u-list"><div class="empty">${esc(t("loading"))}</div></div></div>`;
+       <div class="card"><h2>${esc(t("navUsers"))}</h2><div id="u-list"><div class="empty">${esc(t("loading"))}</div></div></div>
+       ${isAdmin() ? `<div class="card" id="backup-card">
+         <h2>🛡️ ${esc(state.lang === "en" ? "Database backup" : "النسخ الاحتياطي لقاعدة البيانات")}</h2>
+         <p class="muted">${esc(state.lang === "en"
+            ? "Save a full backup of everything (HR + appraisal) as one file before editing the site, and restore it when needed. On Railway the database is a separate persistent service, so redeploying code never deletes your data."
+            : "احفظ نسخة كاملة من كل البيانات (الموارد البشرية + التقييم) في ملف واحد قبل أي تعديل على الموقع، واسترجعها عند الحاجة. على Railway قاعدة البيانات خدمة منفصلة، فإعادة نشر الكود لا تحذف بياناتك.")}</p>
+         <div class="inline-actions">
+           <button class="btn btn-primary" id="bk-download">⬇️ ${esc(state.lang === "en" ? "Save backup" : "حفظ نسخة احتياطية")}</button>
+           <button class="btn btn-outline" id="bk-restore">⬆️ ${esc(state.lang === "en" ? "Restore from file" : "استرجاع من ملف")}</button>
+           <input type="file" id="bk-file" accept="application/json,.json" hidden>
+         </div>
+         <div id="bk-msg" class="muted" style="margin-top:10px;font-weight:600"></div>
+       </div>` : ""}`;
+    if (isAdmin()) initBackupCard();
     $("#u-add").addEventListener("click", async () => {
       const payload = { name: $("#u-name").value.trim(), username: $("#u-username").value.trim(), passcode: $("#u-pass").value.trim(), role: $("#u-role").value };
       if (!payload.passcode) { toast(t("required")); return; }
@@ -976,6 +989,43 @@
       </tbody></table></div>`;
       $$("[data-toggle]", el).forEach((b) => b.addEventListener("click", async () => { try { await S.toggleUser(b.dataset.toggle); } catch (e) {} loadUsers(); }));
       $$("[data-del]", el).forEach((b) => b.addEventListener("click", async () => { if (!confirm(t("confirmDelete"))) return; try { await S.deleteUser(b.dataset.del); } catch (e) {} loadUsers(); }));
+    }
+    // Full unified backup/restore (HR + appraisal) — admin only.
+    function initBackupCard() {
+      const msg = (txt, ok) => { const m = $("#bk-msg"); if (m) { m.textContent = txt || ""; m.style.color = txt ? (ok ? "#1E883F" : "#C0392B") : ""; } };
+      const dl = $("#bk-download"), rs = $("#bk-restore"), fi = $("#bk-file");
+      if (dl) dl.addEventListener("click", () => {
+        dl.disabled = true; msg(state.lang === "en" ? "Preparing backup…" : "جارٍ تجهيز النسخة…", true);
+        fetch("/api/backup", { credentials: "same-origin" })
+          .then((r) => { if (!r.ok) throw new Error("backup"); return r.blob(); })
+          .then((blob) => {
+            const url = URL.createObjectURL(blob), a = document.createElement("a");
+            const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+            a.href = url; a.download = "maysan-backup-" + stamp + ".json"; document.body.appendChild(a); a.click();
+            a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+            msg(state.lang === "en" ? "✓ Backup saved. Keep the file safe." : "✓ تم حفظ النسخة الاحتياطية. احتفظ بالملف في مكان آمن.", true);
+          })
+          .catch(() => msg(state.lang === "en" ? "Backup failed." : "تعذّر إنشاء النسخة الاحتياطية.", false))
+          .then(() => { dl.disabled = false; });
+      });
+      if (rs && fi) {
+        rs.addEventListener("click", () => fi.click());
+        fi.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0]; if (!file) return;
+          if (!confirm(state.lang === "en" ? "This will replace all current data with the file's contents. Continue?" : "سيتم استبدال كل البيانات الحالية بمحتوى الملف. هل أنت متأكد؟")) { e.target.value = ""; return; }
+          rs.disabled = true; msg(state.lang === "en" ? "Restoring…" : "جارٍ الاسترجاع…", true);
+          const reader = new FileReader();
+          reader.onload = () => {
+            let bundle; try { bundle = JSON.parse(reader.result); } catch (err) { msg(state.lang === "en" ? "Invalid file." : "الملف غير صالح.", false); rs.disabled = false; e.target.value = ""; return; }
+            fetch("/api/restore", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify(bundle) })
+              .then((r) => { if (!r.ok) throw new Error("restore"); return r.json(); })
+              .then(() => { msg(state.lang === "en" ? "✓ Data restored successfully." : "✓ تم استرجاع البيانات بنجاح.", true); loadUsers(); })
+              .catch(() => msg(state.lang === "en" ? "Restore failed. Make sure it is a valid backup file." : "تعذّر الاسترجاع. تأكد أنه ملف نسخة احتياطية صحيح.", false))
+              .then(() => { rs.disabled = false; e.target.value = ""; });
+          };
+          reader.readAsText(file);
+        });
+      }
     }
     loadUsers();
   }
