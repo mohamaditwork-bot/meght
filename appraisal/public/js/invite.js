@@ -11,7 +11,7 @@
 
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
-  const state = { lang: 'ar', token: null, invite: null, deptId: null, ratings: {} };
+  const state = { lang: 'ar', token: null, invite: null, deptId: null, ratings: {}, signatures: {} };
   const t = (k) => { const d = window.I18N[state.lang]; return (d && k in d) ? d[k] : k; };
   const L = (o) => (o ? (state.lang === 'ar' ? (o.ar || o.en) : (o.en || o.ar)) : '');
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -112,10 +112,16 @@
             ${D.DEPARTMENTS.map((d) => `<option value="${d.id}" ${state.deptId === d.id ? 'selected' : ''}>${esc(L(d))}</option>`).join('')}
           </select></div>`;
 
+    const heroDept = inv.deptId ? L(SC.getDepartment(inv.deptId) || {}) : '';
+    const heroBits = [inv.hotelName, heroDept].filter(Boolean).join(' · ');
     $('#invite-root').innerHTML =
-      `<div class="page-title"><h1>${esc(t('evalFormTitle'))}</h1></div>
-      <div class="card"><p class="muted" style="margin:0">${esc(t('inviteIntro'))}</p>
-        ${inv.note ? `<p style="margin:8px 0 0"><b>${esc(t('note'))}:</b> ${esc(inv.note)}</p>` : ''}</div>
+      `<div class="invite-hero">
+        <div class="ih-badge">${esc(t('evalFormTitle'))}</div>
+        <h1>${esc(inv.employeeName || t('employee'))}</h1>
+        ${heroBits ? `<div class="ih-sub">${esc(heroBits)}</div>` : ''}
+        <p class="ih-intro">${esc(t('inviteIntro'))}</p>
+        ${inv.note ? `<div class="ih-note"><b>${esc(t('note'))}:</b> ${esc(inv.note)}</div>` : ''}
+      </div>
       <div class="card"><h2>${esc(t('employee'))}</h2>
         <div class="grid-2">
           ${roText(t('hotel'), inv.hotelName || '—')}
@@ -138,6 +144,10 @@
           <select id="iv-rec"><option value="">—</option>
             ${D.DIRECT_MANAGER_RECOMMENDATIONS.map((r) => `<option value="${r.id}">${esc(L(r))}</option>`).join('')}</select></div>
       </div>
+      <div class="card" id="iv-sign-card"><h2>${esc(t('signatures'))}</h2>
+        <div id="iv-sign-status"></div>
+        <div id="iv-sign-pads"></div>
+      </div>
       <div class="page-title" style="justify-content:flex-end">
         <button class="btn btn-primary" id="iv-submit">${esc(t('submitEvaluation'))}</button>
       </div>`;
@@ -152,7 +162,19 @@
       });
     }
     bindCrit(); recalc();
+    initSignatures();
     $('#iv-submit').addEventListener('click', submit);
+  }
+
+  function refreshSignStatus() {
+    const el = $('#iv-sign-status'); if (!el) return;
+    el.innerHTML = window.SigPad.statusHTML({ signatories: D.SIGNATORIES, signatures: state.signatures, lang: state.lang, t });
+  }
+  function initSignatures() {
+    const pads = $('#iv-sign-pads'); if (!pads || !window.SigPad) return;
+    pads.innerHTML = window.SigPad.card({ signatories: D.SIGNATORIES, signatures: state.signatures, t, lang: state.lang });
+    window.SigPad.init(pads, state.signatures, refreshSignStatus, t);
+    refreshSignStatus();
   }
 
   function bindCrit() {
@@ -196,6 +218,7 @@
       ratings: state.ratings,
       strengths: val('#iv-strengths'), improvements: val('#iv-improvements'), objectives: val('#iv-objectives'),
       managerNotes: val('#iv-notes'), managerRecommendation: val('#iv-rec'),
+      signatures: state.signatures,
       lang: state.lang,
     };
     const btn = $('#iv-submit'); btn.disabled = true; btn.textContent = t('loading');
@@ -203,11 +226,13 @@
     if (r.ok && r.data && r.data.ok) {
       const s = r.data.score || {};
       const again = r.data.reusable ? `<button class="btn btn-primary" id="iv-again" style="margin-top:14px">${esc(t('submitAnother'))}</button>` : '';
+      const signStatus = window.SigPad.statusHTML({ signatories: D.SIGNATORIES, signatures: state.signatures, lang: state.lang, t });
       $('#invite-root').innerHTML =
         `<div class="card" style="max-width:560px;margin:48px auto;text-align:center">
           <div style="font-size:52px;line-height:1">✅</div>
           <h2>${esc(t('evalSubmitted'))}</h2>
           <p class="muted">${esc(t('reportNo'))}: <b class="ltr">${esc(r.data.reportNo || '')}</b></p>
+          <div style="margin:10px 0">${signStatus}</div>
           <div class="kpi-grid" style="margin-top:8px">
             <div class="kpi"><div class="k-val">${s.total != null ? s.total : '—'}</div><div class="k-lbl">${esc(t('score'))} / ${D.TOTAL_MAX}</div></div>
             <div class="kpi"><div class="k-val">${s.pct != null ? s.pct + '%' : '—'}</div><div class="k-lbl">${esc(t('kpiAvgPct') || '%')}</div></div>

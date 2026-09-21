@@ -177,6 +177,7 @@
       "</div>" +
 
       '<h3 class="rep-sec">Signatures — <span class="ar">التواقيع</span></h3>' +
+      (window.SigPad ? window.SigPad.statusHTML({ signatories: D.SIGNATORIES, signatures: a.signatures || {}, lang: "ar", t: (k) => (window.I18N && window.I18N.ar && window.I18N.ar[k]) || k }) : "") +
       '<div class="sig-grid">' + sigRows + "</div>" +
 
       '<div class="rep-foot">Generated on ' + esc(fmtDate(new Date().toISOString())) +

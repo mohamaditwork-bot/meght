@@ -510,86 +510,22 @@
     }));
   }
 
-  /* ---------------- Signatures (draw in-app) ---------------- */
+  /* ---------------- Signatures (draw in-app or upload image) ---------------- */
   function signaturesCard() {
     const d = state.draft;
-    const pads = D.SIGNATORIES.map((sg) => {
-      const sig = (d.signatures || {})[sg.id] || {};
-      return `<div class="sig-pad-card">
-        <div class="sp-role">${esc(sg.en)} <span class="ar">${esc(sg.ar)}</span></div>
-        <div class="sig-canvas-wrap">
-          <canvas class="sig-canvas" data-sig-canvas="${sg.id}"></canvas>
-          <div class="sig-hint" data-sig-hint="${sg.id}" ${sig.img ? 'style="display:none"' : ""}>${esc(t("signHere"))}</div>
-        </div>
-        <div class="sig-pad-actions">
-          <input data-sig-name="${sg.id}" value="${esc(sig.name || "")}" placeholder="${esc(t("signName"))}">
-          <button type="button" class="btn btn-sm btn-outline" data-sig-clear="${sg.id}">${esc(t("clearSig"))}</button>
-        </div>
-      </div>`;
-    }).join("");
-    return `<div class="card"><h2>${esc(t("signatures"))}</h2><div class="sig-pads">${pads}</div></div>`;
+    d.signatures = d.signatures || {};
+    const status = window.SigPad.statusHTML({ signatories: D.SIGNATORIES, signatures: d.signatures, lang: state.lang, t });
+    const pads = window.SigPad.card({ signatories: D.SIGNATORIES, signatures: d.signatures, t, lang: state.lang });
+    return `<div class="card"><h2>${esc(t("signatures"))}</h2>${status}${pads}</div>`;
   }
 
   function initSignaturePads(area) {
     const d = state.draft;
-    $$("[data-sig-canvas]", area).forEach((canvas) => {
-      const id = canvas.dataset.sigCanvas;
-      const hint = area.querySelector(`[data-sig-hint="${id}"]`);
-      const ctx = canvas.getContext("2d");
-
-      function resize() {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        // preserve existing drawing
-        const prev = d.signatures[id] && d.signatures[id].img;
-        canvas.width = Math.max(1, Math.round(rect.width * dpr));
-        canvas.height = Math.max(1, Math.round(rect.height * dpr));
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = "#12211f";
-        if (prev) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = prev; }
-      }
-      // defer to allow layout
-      requestAnimationFrame(resize);
-
-      let drawing = false, last = null;
-      function pos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        return { x: cx, y: cy };
-      }
-      function start(e) { e.preventDefault(); drawing = true; last = pos(e); if (hint) hint.style.display = "none"; }
-      function move(e) {
-        if (!drawing) return; e.preventDefault();
-        const p = pos(e);
-        ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-        last = p;
-      }
-      function end() {
-        if (!drawing) return; drawing = false;
-        d.signatures[id] = d.signatures[id] || {};
-        d.signatures[id].img = canvas.toDataURL("image/png");
-      }
-      canvas.addEventListener("pointerdown", start);
-      canvas.addEventListener("pointermove", move);
-      window.addEventListener("pointerup", end);
-      // touch fallback
-      canvas.addEventListener("touchstart", start, { passive: false });
-      canvas.addEventListener("touchmove", move, { passive: false });
-      canvas.addEventListener("touchend", end);
-
-      const clearBtn = area.querySelector(`[data-sig-clear="${id}"]`);
-      clearBtn.addEventListener("click", () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (d.signatures[id]) d.signatures[id].img = "";
-        if (hint) hint.style.display = "flex";
-      });
-      const nameInp = area.querySelector(`[data-sig-name="${id}"]`);
-      nameInp.addEventListener("input", (e) => {
-        d.signatures[id] = d.signatures[id] || {};
-        d.signatures[id].name = e.target.value;
-      });
-    });
+    d.signatures = d.signatures || {};
+    window.SigPad.init(area, d.signatures, () => {
+      const holder = area.querySelector('.sig-status');
+      if (holder) holder.outerHTML = window.SigPad.statusHTML({ signatories: D.SIGNATORIES, signatures: d.signatures, lang: state.lang, t });
+    }, t);
   }
 
   // Returns the first empty required element (eval details + personal data + every criterion),

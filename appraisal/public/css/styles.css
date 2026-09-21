@@ -184,9 +184,26 @@ textarea { resize:vertical; min-height:70px; }
 .sig-canvas { width:100%; height:120px; border:1px dashed #b9cdc3; border-radius:8px; background:#fff; touch-action:none; cursor:crosshair; display:block; }
 .sig-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   color:#b0c4bb; font-size:13px; pointer-events:none; }
-.sig-pad-actions { display:flex; gap:8px; margin-top:8px; align-items:center; }
-.sig-pad-actions input { flex:1; }
+.sig-pad-actions { display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap; }
+.sig-pad-actions input[data-sig-name] { flex:1; min-width:120px; }
+.sig-upload { position:relative; cursor:pointer; white-space:nowrap; }
+.sig-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; margin-inline-start:6px; vertical-align:middle; }
+.sig-badge.ok { background:#e3f6e9; color:#1E883F; }
+.sig-badge.wait { background:#fdf2dc; color:#9a6a12; }
+.sig-status { font-size:13px; font-weight:700; padding:8px 12px; border-radius:10px; margin-bottom:12px; }
+.sig-status.ok { background:#e3f6e9; color:#1E883F; }
+.sig-status.wait { background:#fdf2dc; color:#9a6a12; }
 .report-print-note { font-size:12px; color:var(--muted); margin-top:8px; }
+
+/* Manager evaluation-link hero banner */
+.invite-hero { background:linear-gradient(165deg,#0B4D2E 0%,#156835 100%); color:#fff; border-radius:18px;
+  padding:26px 28px; margin-bottom:18px; box-shadow:0 12px 34px rgba(8,28,15,.18); }
+.invite-hero .ih-badge { display:inline-block; background:rgba(255,255,255,.16); color:#fff; font-size:12px;
+  font-weight:700; padding:5px 12px; border-radius:20px; margin-bottom:12px; }
+.invite-hero h1 { margin:0; font-size:26px; color:#fff; }
+.invite-hero .ih-sub { margin-top:6px; font-size:15px; font-weight:600; color:#d7f0df; }
+.invite-hero .ih-intro { margin:14px 0 0; font-size:14px; line-height:1.7; color:#eaf6ee; }
+.invite-hero .ih-note { margin-top:12px; background:rgba(255,255,255,.12); border-radius:10px; padding:10px 14px; font-size:13px; }
 
 /* Enhanced motion and scoring clarity */
 body {
