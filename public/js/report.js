@@ -8,7 +8,7 @@
 (function () {
   const A = () => window.App;
   const api = (p) => window.App.api(p);
-  const LOGO = 'assets/logo.svg';      // swapped to data URI in standalone build
+  const LOGO = 'assets/logo.webp';      // swapped to data URI in standalone build
   const QR = 'assets/qr-linktree.svg';
   const LINKTREE = 'https://linktr.ee/maysan.group';
 

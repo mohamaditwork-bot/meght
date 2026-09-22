@@ -43,7 +43,7 @@ body {
   background:radial-gradient(1200px 600px at 50% -10%, #0d4f4a22, transparent), var(--bg); padding:20px; }
 .login-card { background:var(--card); border-radius:20px; box-shadow:0 12px 40px rgba(13,79,74,.15);
   padding:34px; width:100%; max-width:400px; text-align:center; }
-.login-logo { height:80px; margin-bottom:8px; }
+.login-logo { height:80px; width:auto; max-width:100%; margin-bottom:8px; }
 .login-lang { display:flex; gap:6px; justify-content:center; margin:10px 0 18px; }
 .lang-btn { border:1px solid var(--line); background:#fff; border-radius:20px; padding:5px 16px;
   cursor:pointer; font-family:inherit; font-size:13px; }
@@ -60,7 +60,7 @@ textarea { resize:vertical; min-height:70px; }
 .topbar { background:linear-gradient(120deg,var(--teal-d),var(--teal) 60%,var(--green)); color:#fff;
   display:flex; align-items:center; gap:16px; padding:10px 20px; position:sticky; top:0; z-index:40; flex-wrap:wrap; }
 .brand { display:flex; align-items:center; gap:10px; }
-.brand-logo { height:42px; background:#fff; border-radius:8px; padding:4px; }
+.brand-logo { height:42px; width:auto; max-width:150px; background:#fff; border-radius:8px; padding:4px; object-fit:contain; }
 .brand-text { display:flex; flex-direction:column; line-height:1.2; }
 .brand-text strong { font-size:15px; }
 .brand-text .muted { color:#c9f2d4; font-size:11px; }

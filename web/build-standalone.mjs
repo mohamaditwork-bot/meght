@@ -3,7 +3,7 @@ const read = (p) => fs.readFileSync(p, 'utf8');
 
 // Inline logos + QR as data URIs (no asset paths in an artifact).
 const dataUri = (svg) => 'data:image/svg+xml,' + encodeURIComponent(svg).replace(/'/g, '%27');
-const logo = dataUri(read('public/assets/logo.svg'));
+const logo = 'data:image/webp;base64,' + fs.readFileSync('public/assets/logo.webp').toString('base64');
 const logoWhite = dataUri(read('public/assets/logo-white.svg'));
 const qr = dataUri(read('public/assets/qr-linktree.svg'));
 
@@ -35,7 +35,7 @@ const pagedB64 = fs.readFileSync('public/js/vendor/paged.min.js').toString('base
 // Replace logo + QR asset references with data URIs across markup + scripts.
 const swap = (s) => s
   .split('assets/logo-white.svg').join(logoWhite)
-  .split('assets/logo.svg').join(logo)
+  .split('assets/logo.webp').join(logo)
   .split('assets/qr-linktree.svg').join(qr);
 bodyMarkup = swap(bodyMarkup);
 pages = swap(pages); charts = swap(charts); app = swap(app); shim = swap(shim); uploadMod = swap(uploadMod); report = swap(report);

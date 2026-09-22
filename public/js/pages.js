@@ -40,7 +40,7 @@
  }).join(' · ') || 'لا يوجد';
  const period = s.active ? (s.active.periodLabel || s.active.period) : '—';
  return `<div class="print-header">
- <img src="assets/logo.svg" alt="MAYSAN INT. GROUP">
+ <img src="assets/logo.webp" alt="MAYSAN INT. GROUP">
  <div class="pr-title"><h1>${title}</h1>
  <div class="pr-meta">مجموعة ميسان الدولية · تقرير الموارد البشرية<br>
  الفترة: ${period} · الفلاتر: ${fmt.esc(filters)}<br>
