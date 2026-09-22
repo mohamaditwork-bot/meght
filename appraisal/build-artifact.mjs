@@ -5,7 +5,7 @@ const P = (f) => path.join('public', f);
 const read = (f) => fs.readFileSync(P(f), 'utf8');
 
 // Logo as a data URI (no external asset paths in an artifact).
-const logo = 'data:image/svg+xml,' + encodeURIComponent(read('assets/logo.svg')).replace(/'/g, '%27');
+const logo = 'data:image/webp;base64,' + fs.readFileSync(P('assets/logo.webp')).toString('base64');
 
 // index.html body: keep the shell markup, drop script tags + the HR-home link.
 let idx = read('index.html');
@@ -17,7 +17,7 @@ const HR_URL = 'https://claude.ai/artifact/Pa7iMKYVBA6zttXEtg6DTL';
 body = body.split('<a class="btn btn-ghost" href="/hr" title="الموارد البشرية">')
   .join('<a class="btn btn-ghost" target="_blank" rel="noopener" href="' + HR_URL + '" title="الموارد البشرية">');
 // swap logo asset references to the inlined data URI
-body = body.split('/evaluation/assets/logo.svg').join(logo);
+body = body.split('/evaluation/assets/logo.webp').join(logo);
 body = body.trim();
 
 const css = read('css/styles.css');

@@ -38,7 +38,7 @@ button{font-family:inherit;cursor:pointer}
   radial-gradient(900px 600px at 0% 110%,rgba(14,90,90,.18),transparent),#0a2225;z-index:60}
 .login-card{width:min(420px,92vw);background:var(--panel);border-radius:24px;box-shadow:var(--shadow-lg);padding:38px 34px;text-align:center;animation:pop .5s cubic-bezier(.2,.8,.2,1)}
 @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
-.login-logo{height:78px;margin-bottom:6px}
+.login-logo{height:78px;width:auto;max-width:100%;margin-bottom:6px}
 .login-card h1{font-size:19px;margin:8px 0 2px;color:var(--teal-800)}
 .login-card p{color:var(--muted);margin:0 0 24px;font-size:13px}
 .pass-field{position:relative;margin-bottom:14px}
