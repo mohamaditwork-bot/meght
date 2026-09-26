@@ -10,8 +10,15 @@
    ============================================================= */
 const mysql = require('mysql2/promise');
 
+function firstEnvUrl() {
+  const names = ['DATABASE_URL', 'MYSQL_URL', 'DATABASE_PRIVATE_URL', 'MYSQL_PRIVATE_URL',
+    'MYSQL_PUBLIC_URL', 'JAWSDB_URL', 'CLEARDB_DATABASE_URL'];
+  for (const n of names) { const v = process.env[n]; if (v && String(v).trim()) return String(v).trim(); }
+  return null;
+}
 function config() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  const url = firstEnvUrl();
+  if (url) return url;
   const host = process.env.MYSQL_HOST || process.env.MYSQLHOST;
   if (!host) return null;
   return {

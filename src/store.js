@@ -40,8 +40,19 @@ const UP_DIR = path.join(ROOT, 'uploads');
 for (const d of [ROOT, SNAP_DIR, UP_DIR]) { try { fs.mkdirSync(d, { recursive: true }); } catch {} }
 
 // ---- Backend selection ---------------------------------------------------
+// Accept the common connection-URL variable names used by cloud hosts. Railway's
+// MySQL plugin, for example, exposes MYSQL_URL / MYSQL_PUBLIC_URL rather than
+// DATABASE_URL — accepting all of them means the app connects to the persistent
+// database automatically and never silently falls back to ephemeral file storage.
+function firstEnvUrl() {
+  const names = ['DATABASE_URL', 'MYSQL_URL', 'DATABASE_PRIVATE_URL', 'MYSQL_PRIVATE_URL',
+    'MYSQL_PUBLIC_URL', 'JAWSDB_URL', 'CLEARDB_DATABASE_URL'];
+  for (const n of names) { const v = process.env[n]; if (v && String(v).trim()) return String(v).trim(); }
+  return null;
+}
 function mysqlConfig() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  const url = firstEnvUrl();
+  if (url) return url;
   const host = process.env.MYSQL_HOST || process.env.MYSQLHOST;
   if (!host) return null;
   return {
@@ -53,6 +64,8 @@ function mysqlConfig() {
   };
 }
 const USE_DB = !!mysqlConfig();
+// Export so the launcher can warn loudly if it is about to run without a database.
+export const usingDatabase = USE_DB;
 
 // In-memory cache for DB mode: logical key -> parsed JSON document.
 const mem = {};
