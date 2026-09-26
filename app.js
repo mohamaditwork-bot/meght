@@ -138,6 +138,7 @@ app.get('/api/state', requireAuth, (req, res) => {
     snapshots,
     options: ds ? filterOptions(ds.records) : {},
     quality: active ? active.data.validation?.quality : null,
+    storage: { backend: store.backend, persistent: store.backend === 'mysql' },
     user: req.session.user,
   });
 });
