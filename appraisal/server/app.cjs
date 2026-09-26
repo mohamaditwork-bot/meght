@@ -285,6 +285,12 @@ function publicInviteView(invite) {
     reusable: !!invite.reusable,
     submitCount: invite.submitCount || 0,
     expiresAt: invite.expiresAt,
+    // Info about the last submitted evaluation on this link, so another manager
+    // can open the link to just SIGN it instead of filling a new one.
+    hasResult: !!invite.resultId,
+    resultId: invite.resultId || null,
+    lastScore: invite.lastScore || null,
+    lastEmployeeName: invite.lastEmployeeName || null,
   };
 }
 function inviteUsable(invite) {
@@ -358,9 +364,31 @@ app.post('/api/public/invite/:token/submit', wrap(async (req, res) => {
   await store.invites.update(invite.token, {
     status: invite.reusable ? 'open' : 'submitted',
     submittedAt: now, resultId: appraisal.id, submitCount: count,
+    lastScore: { total: score.total, pct: score.pct }, lastEmployeeName: employeeName,
   });
 
   res.json({ ok: true, reportNo: appraisal.reportNo, score: { total: score.total, pct: score.pct }, reusable: !!invite.reusable });
+}));
+
+// Sign-only: another manager opens the same link and just ADDS their signature
+// to the last submitted evaluation, without re-filling the whole form.
+app.post('/api/public/invite/:token/sign', wrap(async (req, res) => {
+  const store = await getStore();
+  const invite = await store.invites.get(req.params.token);
+  if (!invite) return res.status(404).json({ error: 'not_found' });
+  if (invite.status === 'revoked') return res.status(409).json({ error: 'revoked' });
+  if (!invite.resultId) return res.status(409).json({ error: 'no_result' });
+  const appraisal = await store.appraisals.get(invite.resultId);
+  if (!appraisal) return res.status(404).json({ error: 'result_not_found' });
+  const incoming = (req.body && req.body.signatures && typeof req.body.signatures === 'object') ? req.body.signatures : {};
+  // Merge: only overwrite a signatory slot when a new signature image is provided.
+  const merged = Object.assign({}, appraisal.signatures || {});
+  for (const [k, v] of Object.entries(incoming)) {
+    if (v && (v.img || v.name)) merged[k] = Object.assign({}, merged[k], v);
+  }
+  appraisal.signatures = merged;
+  await store.appraisals.save(appraisal);
+  res.json({ ok: true, reportNo: appraisal.reportNo, employeeName: appraisal.employeeName });
 }));
 
 // ---- Static + invite page routing ---------------------------------------
