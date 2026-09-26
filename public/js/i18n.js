@@ -20,7 +20,7 @@
       f_male: 'ذكر', f_female: 'أنثى', f_saudi: 'سعودي', f_nonsaudi: 'غير سعودي', f_reset: 'مسح الفلاتر',
       // nav groups
       nav_overview: 'نظرة عامة', nav_workforce: 'القوى العاملة', nav_compliance: 'الامتثال',
-      nav_data: 'البيانات والإدارة',
+      nav_contractors: 'الشركات المتعاقدة', nav_data: 'البيانات والإدارة',
       // nav items (label per route)
       n_dashboard: 'لوحة القيادة', n_insights: 'رؤى الذكاء الاصطناعي', n_workforce: 'تحليلات القوى العاملة',
       n_saudization: 'السعودة والتوطين', n_nationality: 'الجنسيات', n_departments: 'الأقسام',
@@ -45,7 +45,7 @@
       f_nationality: 'Nationality', f_level: 'Level', f_gender: 'Gender', f_class: 'Classification',
       f_male: 'Male', f_female: 'Female', f_saudi: 'Saudi', f_nonsaudi: 'Non-Saudi', f_reset: 'Clear filters',
       nav_overview: 'Overview', nav_workforce: 'Workforce', nav_compliance: 'Compliance',
-      nav_data: 'Data & Administration',
+      nav_contractors: 'Contractor Companies', nav_data: 'Data & Administration',
       n_dashboard: 'Dashboard', n_insights: 'AI Insights', n_workforce: 'Workforce Analytics',
       n_saudization: 'Saudization', n_nationality: 'Nationalities', n_departments: 'Departments',
       n_jobtitles: 'Job Titles', n_hotels: 'Hotels & Comparison', n_leave: 'Leave & Balances',

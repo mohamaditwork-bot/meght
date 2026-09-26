@@ -164,28 +164,58 @@ export function saveSnapshot(id, payload) { writeJSON(path.join(SNAP_DIR, `${id}
 export function loadSnapshot(id) { return readJSON(path.join(SNAP_DIR, `${id}.json`), null); }
 export function deleteSnapshot(id) {
   const meta = getMeta();
+  const removed = meta.snapshots.find((s) => s.id === id);
+  const kind = snapKind(removed);
   meta.snapshots = meta.snapshots.filter((s) => s.id !== id);
-  if (meta.activeSnapshotId === id) meta.activeSnapshotId = meta.snapshots.length ? latestSnapshotMeta(meta).id : null;
+  meta.activeByKind = meta.activeByKind || {};
+  if (meta.activeByKind[kind] === id) meta.activeByKind[kind] = (latestSnapshotMeta(meta, kind) || {}).id || null;
+  if (meta.activeSnapshotId === id) meta.activeSnapshotId = (latestSnapshotMeta(meta, 'permanent') || {}).id || null;
   saveMeta(meta);
   deleteFile(path.join(SNAP_DIR, `${id}.json`));
 }
 
-export function listSnapshots() {
+// Every snapshot belongs to a KIND: 'permanent' (direct employees, with leaves)
+// or 'contractor' (company/labor-supply staff). Older snapshots without a kind
+// are treated as permanent. Each kind keeps its own independent history and its
+// own "active" pointer, so uploading a contractor file never overwrites the
+// permanent data and vice versa.
+export function snapKind(s) { return (s && s.kind === 'contractor') ? 'contractor' : 'permanent'; }
+
+export function listSnapshots(kind) {
   const meta = getMeta();
-  return meta.snapshots.slice().sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+  let list = meta.snapshots.slice();
+  if (kind) list = list.filter((s) => snapKind(s) === kind);
+  return list.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
 }
 function sortKey(s) { return (s.period || '') + '|' + (s.uploadedAt || ''); }
-function latestSnapshotMeta(meta) { return meta.snapshots.slice().sort((a, b) => sortKey(b).localeCompare(sortKey(a)))[0]; }
+function latestSnapshotMeta(meta, kind) {
+  let list = meta.snapshots.slice();
+  if (kind) list = list.filter((s) => snapKind(s) === kind);
+  return list.sort((a, b) => sortKey(b).localeCompare(sortKey(a)))[0];
+}
 
-export function getActiveSnapshot() {
+// getActiveSnapshot(kind): with no kind, returns the active PERMANENT snapshot
+// (backward compatible with every existing dashboard). With a kind, returns that
+// kind's active snapshot (or the latest of that kind).
+export function getActiveSnapshot(kind) {
   const meta = getMeta();
-  const id = meta.activeSnapshotId || (meta.snapshots.length ? latestSnapshotMeta(meta).id : null);
-  return id ? { meta: meta.snapshots.find((s) => s.id === id), data: loadSnapshot(id) } : null;
+  const k = kind || 'permanent';
+  const byKind = meta.activeByKind && meta.activeByKind[k];
+  // legacy: fall back to the old single activeSnapshotId for permanent
+  const legacy = (k === 'permanent') ? meta.activeSnapshotId : null;
+  const id = byKind || legacy || (latestSnapshotMeta(meta, k) || {}).id || null;
+  const m = id ? meta.snapshots.find((s) => s.id === id) : null;
+  return m ? { meta: m, data: loadSnapshot(m.id) } : null;
 }
 export function setActiveSnapshot(id) {
   const meta = getMeta();
-  if (meta.snapshots.some((s) => s.id === id)) { meta.activeSnapshotId = id; saveMeta(meta); return true; }
-  return false;
+  const s = meta.snapshots.find((x) => x.id === id);
+  if (!s) return false;
+  meta.activeByKind = meta.activeByKind || {};
+  meta.activeByKind[snapKind(s)] = id;
+  if (snapKind(s) === 'permanent') meta.activeSnapshotId = id; // keep legacy pointer in sync
+  saveMeta(meta);
+  return true;
 }
 export function previousSnapshotOf(id) {
   const list = listSnapshots();
