@@ -219,27 +219,53 @@ app.get('/api/jobtitles', requirePerm('view_jobtitles'), (req, res) => {
   res.json({ positions: groups });
 });
 
+// Leaves apply to PERMANENT (direct) employees only — contractor/company staff
+// have no leave entitlement and are handled in their own section.
+const isPermanent = (r) => !r.is_contractor;
+function truthyFlag(v) {
+  if (v === true) return true;
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  return ['true', '1', 'yes', 'نعم', 'معلق', 'معلّق'].includes(s);
+}
+
 app.get('/api/leave', requirePerm('view_leave'), (req, res) => {
   const ds = filtered(req); if (!ds) return res.json({ empty: true });
+  const records = ds.records.filter(isPermanent);
   const num = (v) => typeof v === 'number' && Number.isFinite(v) ? v : null;
-  const withAnnual = ds.records.filter((r) => num(r.end_annual_balance) !== null);
-  const withHoliday = ds.records.filter((r) => num(r.end_holiday_balance) !== null);
+  const withAnnual = records.filter((r) => num(r.end_annual_balance) !== null);
+  const withHoliday = records.filter((r) => num(r.end_holiday_balance) !== null);
   const top = (arr, key) => arr.map((r) => ({ code: r.employee_code, name: r.arabic_name || r.name, section: r.section, value: r[key] }))
     .sort((a, b) => b.value - a.value).slice(0, 10);
-  const k = computeKPIs(ds.records, ds.asOf);
+  const k = computeKPIs(records, ds.asOf);
+  // Per-employee leave detail (balance, entitlement, weekly-rest, method, pending).
+  const employees = records.map((r) => ({
+    code: r.employee_code, name: r.arabic_name || r.name, section: r.section, position: r.position,
+    location: r.location, hiring_date: r.hiring_date,
+    annual_balance: num(r.end_annual_balance),          // remaining annual days
+    holiday_balance: num(r.end_holiday_balance),        // weekly-rest balance
+    entitlement: num(r.number_annual_leave),            // yearly entitlement
+    method: r.vacation_method || null,
+    pending: truthyFlag(r.pending_vacation_accrual),
+  })).sort((a, b) => (b.annual_balance || 0) - (a.annual_balance || 0));
+  const pendingCount = employees.filter((e) => e.pending).length;
+  const entitleVals = employees.map((e) => e.entitlement).filter((v) => v != null);
   res.json({
+    count: records.length,
     kpis: {
       annual_total: k.annual_balance_total, annual_avg: k.annual_balance_avg,
       annual_max: withAnnual.length ? Math.max(...withAnnual.map((r) => r.end_annual_balance)) : null,
       annual_min: withAnnual.length ? Math.min(...withAnnual.map((r) => r.end_annual_balance)) : null,
       holiday_total: k.holiday_balance_total, holiday_avg: k.holiday_balance_avg,
+      entitlement_avg: entitleVals.length ? entitleVals.reduce((a, b) => a + b, 0) / entitleVals.length : null,
+      pending_count: pendingCount,
     },
+    employees,
     topAnnual: top(withAnnual, 'end_annual_balance'),
     topHoliday: top(withHoliday, 'end_holiday_balance'),
-    bySection: groupBy(ds.records, 'section', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byPosition: groupBy(ds.records, 'position', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byNationality: groupBy(ds.records, 'nationality', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byTenure: tenureBuckets(ds.records, ds.asOf),
+    bySection: groupBy(records, 'section', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byPosition: groupBy(records, 'position', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byNationality: groupBy(records, 'nationality', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byTenure: tenureBuckets(records, ds.asOf),
   });
 });
 

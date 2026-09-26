@@ -352,29 +352,51 @@
  if (!App.state.hasData) return noData(content);
  const r = await api('/api/leave' + qs());
  const k = r.kpis;
- content.innerHTML = head('الإجازات والأرصدة', 'تحليل رصيد الإجازة السنوية والـHoliday — بقيم دقيقة', printBtn()) +
- `<div class="data-note"> يتم عرض الأرصدة بمنزلتين عشريتين (مثل 34.88 يوم) للعرض فقط، بينما يحتفظ النظام بالقيمة الأصلية الدقيقة للحساب. الرصيد السنوي والـHoliday يُعرضان منفصلين ولا يُدمجان.</div>
+ const emps = r.employees || [];
+ const dnum = (v) => (v == null ? '—' : (+v).toFixed(2) + ' يوم');
+ const pendBadge = (p) => p
+   ? '<span class="badge" style="background:#f59e0b">معلّق</span>'
+   : '<span class="badge" style="background:#16a34a">لا يوجد</span>';
+ const rowHtml = (e) => `<tr>
+   <td data-l="الموظف"><b>${fmt.esc(e.name || '')}</b><span class="sub-cell">${fmt.esc(e.code || '')}</span></td>
+   <td data-l="القسم">${fmt.esc(e.section || '—')}</td>
+   <td data-l="الرصيد المتبقي" class="num"><b>${dnum(e.annual_balance)}</b></td>
+   <td data-l="رصيد الراحات" class="num">${dnum(e.holiday_balance)}</td>
+   <td data-l="الاستحقاق السنوي" class="num">${dnum(e.entitlement)}</td>
+   <td data-l="طريقة الاحتساب">${fmt.esc(e.method || '—')}</td>
+   <td data-l="استحقاق معلّق">${pendBadge(e.pending)}</td></tr>`;
+ content.innerHTML = head('الإجازات والأرصدة', 'تفاصيل إجازات الموظفين الدائمين — رصيد كل موظف واستحقاقه', printBtn() + excelBtn('leaves')) +
+ `<div class="data-note"> الإجازات تخص <b>الموظفين الدائمين فقط</b>. تُعرض الأرصدة كما وردت من آخر ملف Excel: <b>الرصيد المتبقي</b> هو رصيد الإجازة السنوية الحالي، و<b>الاستحقاق السنوي</b> هو ما يُستحق خلال السنة، ورصيد الراحات الأسبوعية يُعرض منفصلاً.</div>
  <div class="kpi-grid">
+ ${kpi({ label: 'موظفون دائمون', value: fmt.n(r.count), accent: 'teal', ico: 'users' })}
  ${kpi({ label: 'إجمالي الرصيد السنوي', value: fmt.days(k.annual_total), accent: 'teal', ico: 'sun' })}
  ${kpi({ label: 'متوسط الرصيد السنوي', value: fmt.days(k.annual_avg), accent: 'green', ico: 'activity' })}
- ${kpi({ label: 'أعلى رصيد سنوي', value: fmt.days(k.annual_max), accent: 'amber', ico: 'chevron-up' })}
- ${kpi({ label: 'أقل رصيد سنوي', value: fmt.days(k.annual_min), accent: 'blue', ico: 'chevron-down' })}
- ${kpi({ label: 'إجمالي رصيد الـHoliday', value: fmt.days(k.holiday_total), accent: 'teal', ico: 'calendar' })}
- ${kpi({ label: 'متوسط الـHoliday', value: fmt.days(k.holiday_avg), accent: 'green', ico: 'calendar' })}
+ ${kpi({ label: 'متوسط الاستحقاق السنوي', value: fmt.days(k.entitlement_avg), accent: 'blue', ico: 'calendar' })}
+ ${kpi({ label: 'إجمالي رصيد الراحات', value: fmt.days(k.holiday_total), accent: 'teal', ico: 'calendar' })}
+ ${kpi({ label: 'استحقاق معلّق', value: fmt.n(k.pending_count), accent: 'amber', ico: 'clock' })}
  </div>
+ <div class="panel"><div class="panel-head"><h3>تفاصيل إجازات الموظفين</h3>
+   <input id="leaveSearch" class="mini-search" placeholder="ابحث بالاسم أو الرقم أو القسم…" autocomplete="off"></div>
+   <div class="panel-body tbl-wrap">
+   <table class="tbl responsive-cards"><thead><tr>
+     <th>الموظف</th><th>القسم</th><th>الرصيد المتبقي</th><th>رصيد الراحات</th><th>الاستحقاق السنوي</th><th>طريقة الاحتساب</th><th>استحقاق معلّق</th>
+   </tr></thead><tbody id="leaveTbody">${emps.map(rowHtml).join('')}</tbody></table></div></div>
  <div class="grid g-2">
  ${panel('أعلى 10 موظفين — الرصيد السنوي', 'chTopAnnual', { chartCls: 'lg' })}
- ${panel('أعلى 10 موظفين — رصيد الـHoliday', 'chTopHoliday', { chartCls: 'lg' })}
  ${panel('متوسط الرصيد السنوي حسب القسم', 'chLeaveSec')}
- ${panel('الرصيد السنوي حسب مدة الخدمة', 'chLeaveTenure')}
  </div>`;
  afterPaint(() => {
  Chart.barH(el('chTopAnnual'), r.topAnnual.map((e) => e.name || e.code), r.topAnnual.map((e) => +e.value.toFixed(2)), { showLabel: true, suffix: ' يوم', labelWidth: 120 });
- Chart.barH(el('chTopHoliday'), r.topHoliday.map((e) => e.name || e.code), r.topHoliday.map((e) => +e.value.toFixed(2)), { showLabel: true, suffix: ' يوم', labelWidth: 120, color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#0891b2' }, { offset: 1, color: '#22d3ee' }]) });
  const sec = r.bySection.slice(0, 12);
  Chart.barH(el('chLeaveSec'), sec.map((g) => g.key), sec.map((g) => +(g.avg || 0).toFixed(2)), { suffix: ' يوم', labelWidth: 110 });
- Chart.barV(el('chLeaveTenure'), r.byTenure.map((b) => b.label), r.byTenure.map((b) => b.count));
+ const search = el('leaveSearch'), tb = el('leaveTbody');
+ if (search) search.addEventListener('input', () => {
+   const q = search.value.trim().toLowerCase();
+   const filtered = !q ? emps : emps.filter((e) => (String(e.name || '') + ' ' + String(e.code || '') + ' ' + String(e.section || '')).toLowerCase().includes(q));
+   tb.innerHTML = filtered.map(rowHtml).join('');
  });
+ });
+ bindExcel(content, () => exportRows(emps.map((e) => ({ 'الاسم': e.name, 'الرقم': e.code, 'القسم': e.section, 'الموقع': e.location, 'الرصيد المتبقي': e.annual_balance, 'رصيد الراحات': e.holiday_balance, 'الاستحقاق السنوي': e.entitlement, 'طريقة الاحتساب': e.method, 'استحقاق معلّق': e.pending ? 'نعم' : 'لا' })), 'leaves', 'leaves-detail.xlsx'));
  };
 
  // ========== SALARY ==========

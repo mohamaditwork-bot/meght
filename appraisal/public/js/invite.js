@@ -11,7 +11,7 @@
 
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
-  const state = { lang: 'ar', token: null, invite: null, deptId: null, ratings: {}, signatures: {} };
+  const state = { lang: 'ar', token: null, invite: null, deptId: null, hotelName: '', ratings: {}, signatures: {} };
   const t = (k) => { const d = window.I18N[state.lang]; return (d && k in d) ? d[k] : k; };
   const L = (o) => (o ? (state.lang === 'ar' ? (o.ar || o.en) : (o.en || o.ar)) : '');
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -105,6 +105,16 @@
     const roText = (label, value) => `<div class="field"><label>${esc(label)}</label><input value="${esc(value)}" readonly></div>`;
     const editText = (id, label, value) => `<div class="field"><label>${esc(label)}</label><input id="${id}" value="${esc(value || '')}"></div>`;
 
+    // Hotel: preset by the admin → read-only; otherwise the manager picks it.
+    const hotelPreset = !!(inv.hotelName && String(inv.hotelName).trim());
+    const hotels = D.SEED_HOTELS || [];
+    const hotelField = hotelPreset
+      ? roText(t('hotel'), inv.hotelName)
+      : `<div class="field"><label>${esc(t('hotel'))}</label>
+          <select id="iv-hotel"><option value="">${esc(t('chooseHotel') || t('hotel'))}</option>
+            ${hotels.map((h) => `<option value="${esc(L(h))}" ${state.hotelName === L(h) ? 'selected' : ''}>${esc(L(h))}</option>`).join('')}
+          </select></div>`;
+
     const deptField = deptLocked
       ? roText(t('department'), L(SC.getDepartment(inv.deptId) || {}))
       : `<div class="field"><label>${esc(t('department'))}</label>
@@ -124,7 +134,7 @@
       </div>
       <div class="card"><h2>${esc(t('employee'))}</h2>
         <div class="grid-2">
-          ${roText(t('hotel'), inv.hotelName || '—')}
+          ${hotelField}
           ${deptField}
           ${locked('employeeName') ? roText(t('employee'), inv.employeeName) : editText('iv-emp', t('employee'), '')}
           ${locked('employeeNo') ? roText(t('fileNo'), inv.employeeNo) : editText('iv-fileno', t('fileNo'), '')}
@@ -152,6 +162,13 @@
         <button class="btn btn-primary" id="iv-submit">${esc(t('submitEvaluation'))}</button>
       </div>`;
 
+    const hotelSel = $('#iv-hotel');
+    if (hotelSel) hotelSel.addEventListener('change', (e) => {
+      state.hotelName = e.target.value || '';
+      const sub = document.querySelector('.invite-hero .ih-sub');
+      const bits = [state.hotelName, state.deptId ? L(SC.getDepartment(state.deptId) || {}) : ''].filter(Boolean).join(' · ');
+      if (sub) sub.textContent = bits;
+    });
     if (!deptLocked) {
       $('#iv-dept').addEventListener('change', (e) => {
         state.deptId = e.target.value || null;
@@ -186,6 +203,8 @@
   }
 
   function firstInvalid() {
+    // Hotel + department must be chosen before starting the evaluation.
+    if ($('#iv-hotel') && !state.hotelName) return $('#iv-hotel');
     if (!state.deptId) return $('#iv-dept');
     const inv = state.invite;
     if (!(inv.employeeName || (($('#iv-emp') && $('#iv-emp').value) || '').trim())) return $('#iv-emp');
@@ -213,7 +232,7 @@
       jobTitle: inv.jobTitle || val('#iv-job'),
       managerName: val('#iv-mgr') || inv.managerName || '',
       periodId: inv.periodId || '',
-      hotelName: inv.hotelName || '',
+      hotelName: inv.hotelName || state.hotelName || '',
       evalDateFrom: val('#iv-from'), evalDateTo: val('#iv-to'),
       ratings: state.ratings,
       strengths: val('#iv-strengths'), improvements: val('#iv-improvements'), objectives: val('#iv-objectives'),
@@ -272,6 +291,7 @@
       return messageCard(t(map[r.data.reason] || 'inviteInvalid'));
     }
     state.deptId = state.invite.deptId || null;
+    state.hotelName = state.invite.hotelName || '';
     render();
   }
 
