@@ -56,29 +56,11 @@
   .sig-role { font-size:8.5px; color:#555; margin-top:1px; }
   .rep-foot { margin-top:8px; text-align:center; font-size:8.5px; color:#888; border-top:1px solid #eee; padding-top:5px; }
   @media print {
-    html, body { width:210mm; }
     body { padding:0; }
     .report { max-width:none; }
     .rep-sec, .sum-card.total, .sec-score, .sig-badge, .sig-status { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    /* The whole report is wrapped in #fit and scaled to fit exactly one A4 page. */
-    #fit { transform-origin: top center; }
   }
   `;
-
-  // Auto-fit: after layout, scale the report so it always fits on ONE A4 page
-  // (both height and width), no matter how long the criteria list is.
-  const FIT_SCRIPT =
-    "window.onload=function(){" +
-    "var fit=document.getElementById('fit');" +
-    "if(fit){" +
-    // A4 printable area at 96dpi minus the 7mm @page margins ≈ 196mm x 283mm.
-    "var PXMM=96/25.4, availH=283*PXMM, availW=196*PXMM;" +
-    "var h=fit.scrollHeight, w=fit.scrollWidth;" +
-    "var s=Math.min(1, availH/h, availW/w);" +
-    "if(s<1){fit.style.transform='scale('+s+')';}" +
-    "}" +
-    "setTimeout(function(){window.print();},350);" +
-    "};";
 
   function printReport(appraisal) {
     const body = window.REPORT.buildReportBody(appraisal);
@@ -87,8 +69,8 @@
     w.document.write(
       "<!doctype html><html><head><meta charset='utf-8'><title>" +
       (appraisal.reportNo || "Appraisal") + "</title><style>" + PRINT_CSS + "</style></head><body>" +
-      "<div id='fit'>" + body + "</div>" +
-      "<script>" + FIT_SCRIPT + "<\/script>" +
+      body +
+      "<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>" +
       "</body></html>"
     );
     w.document.close();
