@@ -11,7 +11,7 @@
 
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
-  const state = { lang: 'ar', token: null, invite: null, deptId: null, ratings: {}, signatures: {} };
+  const state = { lang: 'ar', token: null, invite: null, deptId: null, hotelName: '', mode: 'fill', ratings: {}, signatures: {} };
   const t = (k) => { const d = window.I18N[state.lang]; return (d && k in d) ? d[k] : k; };
   const L = (o) => (o ? (state.lang === 'ar' ? (o.ar || o.en) : (o.en || o.ar)) : '');
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -98,12 +98,37 @@
     </div>`;
   }
 
+  // A small switcher shown only when the link already has a submitted result:
+  // the opener chooses to complete a NEW evaluation or to JUST SIGN the last one.
+  function modeSwitchHTML() {
+    const inv = state.invite;
+    if (!inv.hasResult) return '';
+    const b = (m, label) => `<button type="button" class="btn ${state.mode === m ? 'btn-primary' : 'btn-outline'} btn-sm" data-mode="${m}">${esc(label)}</button>`;
+    return `<div class="mode-switch">${b('fill', t('fillNewEval'))}${b('sign', t('signLastEval'))}</div>`;
+  }
+  function bindModeSwitch() {
+    $$('[data-mode]').forEach((btn) => btn.addEventListener('click', () => {
+      state.mode = btn.dataset.mode; render(); window.scrollTo(0, 0);
+    }));
+  }
+
   function render() {
+    if (state.mode === 'sign' && state.invite.hasResult) return renderSignOnly();
     const inv = state.invite;
     const locked = (k) => inv[k] != null && String(inv[k]).trim() !== '';
     const deptLocked = inv.lockDept && inv.deptId;
     const roText = (label, value) => `<div class="field"><label>${esc(label)}</label><input value="${esc(value)}" readonly></div>`;
     const editText = (id, label, value) => `<div class="field"><label>${esc(label)}</label><input id="${id}" value="${esc(value || '')}"></div>`;
+
+    // Hotel: preset by the admin → read-only; otherwise the manager picks it.
+    const hotelPreset = !!(inv.hotelName && String(inv.hotelName).trim());
+    const hotels = D.SEED_HOTELS || [];
+    const hotelField = hotelPreset
+      ? roText(t('hotel'), inv.hotelName)
+      : `<div class="field"><label>${esc(t('hotel'))}</label>
+          <select id="iv-hotel"><option value="">${esc(t('chooseHotel') || t('hotel'))}</option>
+            ${hotels.map((h) => `<option value="${esc(L(h))}" ${state.hotelName === L(h) ? 'selected' : ''}>${esc(L(h))}</option>`).join('')}
+          </select></div>`;
 
     const deptField = deptLocked
       ? roText(t('department'), L(SC.getDepartment(inv.deptId) || {}))
@@ -122,9 +147,10 @@
         <p class="ih-intro">${esc(t('inviteIntro'))}</p>
         ${inv.note ? `<div class="ih-note"><b>${esc(t('note'))}:</b> ${esc(inv.note)}</div>` : ''}
       </div>
+      ${modeSwitchHTML()}
       <div class="card"><h2>${esc(t('employee'))}</h2>
         <div class="grid-2">
-          ${roText(t('hotel'), inv.hotelName || '—')}
+          ${hotelField}
           ${deptField}
           ${locked('employeeName') ? roText(t('employee'), inv.employeeName) : editText('iv-emp', t('employee'), '')}
           ${locked('employeeNo') ? roText(t('fileNo'), inv.employeeNo) : editText('iv-fileno', t('fileNo'), '')}
@@ -152,6 +178,13 @@
         <button class="btn btn-primary" id="iv-submit">${esc(t('submitEvaluation'))}</button>
       </div>`;
 
+    const hotelSel = $('#iv-hotel');
+    if (hotelSel) hotelSel.addEventListener('change', (e) => {
+      state.hotelName = e.target.value || '';
+      const sub = document.querySelector('.invite-hero .ih-sub');
+      const bits = [state.hotelName, state.deptId ? L(SC.getDepartment(state.deptId) || {}) : ''].filter(Boolean).join(' · ');
+      if (sub) sub.textContent = bits;
+    });
     if (!deptLocked) {
       $('#iv-dept').addEventListener('change', (e) => {
         state.deptId = e.target.value || null;
@@ -163,7 +196,57 @@
     }
     bindCrit(); recalc();
     initSignatures();
+    bindModeSwitch();
     $('#iv-submit').addEventListener('click', submit);
+  }
+
+  // Sign-only view: summary of the last evaluation + signature pads + save.
+  function renderSignOnly() {
+    const inv = state.invite;
+    const sc = inv.lastScore || {};
+    state.signatures = state.signatures || {};
+    $('#invite-root').innerHTML =
+      `<div class="invite-hero">
+        <div class="ih-badge">${esc(t('signLastEval'))}</div>
+        <h1>${esc(inv.lastEmployeeName || inv.employeeName || t('employee'))}</h1>
+        <p class="ih-intro">${esc(t('signOnlyIntro'))}</p>
+      </div>
+      ${modeSwitchHTML()}
+      <div class="card"><h2>${esc(t('lastResult'))}</h2>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k-val">${sc.total != null ? sc.total : '—'}</div><div class="k-lbl">${esc(t('score'))} / ${D.TOTAL_MAX}</div></div>
+          <div class="kpi"><div class="k-val">${sc.pct != null ? sc.pct + '%' : '—'}</div><div class="k-lbl">${esc(t('kpiAvgPct') || '%')}</div></div>
+        </div>
+      </div>
+      <div class="card"><h2>${esc(t('signatures'))}</h2>
+        <div id="iv-sign-status"></div>
+        <div id="iv-sign-pads"></div>
+      </div>
+      <div class="page-title" style="justify-content:flex-end">
+        <button class="btn btn-primary" id="iv-sign-save">${esc(t('saveSignature'))}</button>
+      </div>`;
+    initSignatures();
+    bindModeSwitch();
+    $('#iv-sign-save').addEventListener('click', saveSignatureOnly);
+  }
+
+  async function saveSignatureOnly() {
+    // require at least one signature present
+    const any = D.SIGNATORIES.some((sg) => (state.signatures[sg.id] || {}).img);
+    if (!any) { toast(t('fillRequired') || t('required')); return; }
+    const btn = $('#iv-sign-save'); btn.disabled = true; btn.textContent = t('loading');
+    const r = await req('POST', '/api/public/invite/' + encodeURIComponent(state.token) + '/sign', { signatures: state.signatures });
+    if (r.ok && r.data && r.data.ok) {
+      $('#invite-root').innerHTML =
+        `<div class="card" style="max-width:520px;margin:48px auto;text-align:center">
+          <div style="font-size:52px;line-height:1">✅</div>
+          <h2>${esc(t('signatureSaved'))}</h2>
+          <p class="muted">${esc(t('reportNo'))}: <b class="ltr">${esc(r.data.reportNo || '')}</b></p>
+        </div>`;
+    } else {
+      btn.disabled = false; btn.textContent = t('saveSignature');
+      toast(t('saveFailed'));
+    }
   }
 
   function refreshSignStatus() {
@@ -186,6 +269,8 @@
   }
 
   function firstInvalid() {
+    // Hotel + department must be chosen before starting the evaluation.
+    if ($('#iv-hotel') && !state.hotelName) return $('#iv-hotel');
     if (!state.deptId) return $('#iv-dept');
     const inv = state.invite;
     if (!(inv.employeeName || (($('#iv-emp') && $('#iv-emp').value) || '').trim())) return $('#iv-emp');
@@ -213,7 +298,7 @@
       jobTitle: inv.jobTitle || val('#iv-job'),
       managerName: val('#iv-mgr') || inv.managerName || '',
       periodId: inv.periodId || '',
-      hotelName: inv.hotelName || '',
+      hotelName: inv.hotelName || state.hotelName || '',
       evalDateFrom: val('#iv-from'), evalDateTo: val('#iv-to'),
       ratings: state.ratings,
       strengths: val('#iv-strengths'), improvements: val('#iv-improvements'), objectives: val('#iv-objectives'),
@@ -272,6 +357,7 @@
       return messageCard(t(map[r.data.reason] || 'inviteInvalid'));
     }
     state.deptId = state.invite.deptId || null;
+    state.hotelName = state.invite.hotelName || '';
     render();
   }
 

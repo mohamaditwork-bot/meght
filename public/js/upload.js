@@ -169,7 +169,14 @@
  <div class="field"><label>اسم الفترة</label><input id="pLabel" value="${fmt.esc(p.label)}"></div>
  <div class="field"><label>رمز الفترة (YYYY-MM)</label><input id="pValue" value="${fmt.esc(p.value)}"></div>
  <div class="field"><label>تاريخ البيانات (as-of)</label><input id="pAsOf" type="date" value="${fmt.esc(p.asOf)}"></div>
+ <div class="field"><label>نوع البيانات</label>
+ <select id="pKind">
+ <option value="">تلقائي — يحدده النظام</option>
+ <option value="permanent">موظفون دائمون (فيه إجازات)</option>
+ <option value="contractor">موظفو شركات (فيه شركة/إقامة)</option>
+ </select></div>
  </div>
+ <div class="data-note" style="margin-top:6px">ملف الموظفين الدائمين وملف الشركات <b>مستقلان</b>: كل نوع يُحفظ في مساره الخاص ولا يستبدل الآخر. رفع تحديث جديد من نفس النوع يستبدل آخر نسخة لنفس الفترة فقط.</div>
  <div style="font-size:12px;color:var(--muted)">الملف: ${fmt.esc(W.fileName)} · بواسطة: ${fmt.esc(App.me.username)} · ${new Date().toLocaleString('ar-EG')}</div>
  </div></div>
  <div class="panel"><div class="panel-head"><h3>معاينة المؤشرات</h3></div><div class="panel-body"><div class="mini-kpis">
@@ -189,8 +196,9 @@
  const r = await api('/api/upload/' + W.pendingId + '/commit', { method: 'POST', body: JSON.stringify({
  mapping: W.mapping, normalizationMaps: buildNormMaps(),
  period: el('pValue').value.trim(), periodLabel: el('pLabel').value.trim(), asOf: el('pAsOf').value,
+ kind: (el('pKind') && el('pKind').value) || '',
  }) });
- toast('تم اعتماد البيانات بنجاح', 'ok');
+ toast('تم اعتماد البيانات (' + (r && r.kind === 'contractor' ? 'موظفو شركات' : 'موظفون دائمون') + ')', 'ok');
  await App.loadState();
  location.hash = '#/dashboard'; window.route();
  } catch (e) { toast('تعذّر الحفظ', 'err'); btn.disabled = false; btn.textContent = '✓ اعتماد وحفظ البيانات'; }

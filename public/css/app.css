@@ -152,6 +152,10 @@ button{font-family:inherit;cursor:pointer}
 .panel-head h3{margin:0;font-size:15px;font-weight:800;color:var(--teal-800)}
 .panel-head .p-sub{font-size:11.5px;color:var(--muted);font-weight:600}
 .panel-body{padding:8px 18px 18px;flex:1}
+.mini-search{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-family:inherit;font-size:13px;min-width:220px;max-width:100%;background:#fff}
+.mini-search:focus{outline:none;border-color:var(--green-500);box-shadow:0 0 0 3px rgba(39,168,78,.14)}
+.sub-cell{display:block;font-size:11px;color:var(--muted);font-weight:600;direction:ltr}
+@media(max-width:640px){.mini-search{min-width:0;width:100%}.panel-head{flex-wrap:wrap}}
 .chart{width:100%;height:300px}
 .chart.sm{height:240px} .chart.lg{height:380px}
 

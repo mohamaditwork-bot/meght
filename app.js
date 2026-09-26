@@ -108,13 +108,14 @@ app.get('/api/me', (req, res) => {
 });
 
 // ---- Active dataset helper ----------------------------------------------
-function activeRecords(req) {
-  const snap = resolveSnapshot(req.query.period);
+// kind: 'permanent' (default — every general dashboard) or 'contractor'.
+function activeRecords(req, kind) {
+  const snap = resolveSnapshot(req.query.period, kind);
   if (!snap || !snap.data) return null;
   return { meta: snap.meta, records: snap.data.records, dynamicFields: snap.data.dynamicFields || [], asOf: snap.meta.asOf || snap.data.asOf || null };
 }
-function filtered(req) {
-  const ds = activeRecords(req);
+function filtered(req, kind) {
+  const ds = activeRecords(req, kind);
   if (!ds) return null;
   return { ...ds, records: applyFilters(ds.records, req.query) };
 }
@@ -122,15 +123,18 @@ function filtered(req) {
 // ---- State ---------------------------------------------------------------
 app.get('/api/state', requireAuth, (req, res) => {
   const snapshots = store.listSnapshots().map((s) => ({
-    id: s.id, period: s.period, periodLabel: s.periodLabel, fileName: s.fileName,
+    id: s.id, kind: store.snapKind(s), period: s.period, periodLabel: s.periodLabel, fileName: s.fileName,
     uploadedAt: s.uploadedAt, uploadedBy: s.uploadedBy, employeeCount: s.employeeCount,
     saudiPct: s.saudiPct, payroll: s.payroll, qualityScore: s.qualityScore, status: s.status,
   }));
-  const active = store.getActiveSnapshot();
+  const active = store.getActiveSnapshot();               // permanent stream
+  const contractorActive = store.getActiveSnapshot('contractor');
   const ds = active ? { records: active.data.records } : null;
   res.json({
     hasData: !!active,
+    hasContractorData: !!contractorActive,
     active: active ? { id: active.meta.id, period: active.meta.period, periodLabel: active.meta.periodLabel, asOf: active.meta.asOf } : null,
+    contractorActive: contractorActive ? { id: contractorActive.meta.id, periodLabel: contractorActive.meta.periodLabel, employeeCount: contractorActive.meta.employeeCount } : null,
     snapshots,
     options: ds ? filterOptions(ds.records) : {},
     quality: active ? active.data.validation?.quality : null,
@@ -219,27 +223,53 @@ app.get('/api/jobtitles', requirePerm('view_jobtitles'), (req, res) => {
   res.json({ positions: groups });
 });
 
+// Leaves apply to PERMANENT (direct) employees only — contractor/company staff
+// have no leave entitlement and are handled in their own section.
+const isPermanent = (r) => !r.is_contractor;
+function truthyFlag(v) {
+  if (v === true) return true;
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  return ['true', '1', 'yes', 'نعم', 'معلق', 'معلّق'].includes(s);
+}
+
 app.get('/api/leave', requirePerm('view_leave'), (req, res) => {
   const ds = filtered(req); if (!ds) return res.json({ empty: true });
+  const records = ds.records.filter(isPermanent);
   const num = (v) => typeof v === 'number' && Number.isFinite(v) ? v : null;
-  const withAnnual = ds.records.filter((r) => num(r.end_annual_balance) !== null);
-  const withHoliday = ds.records.filter((r) => num(r.end_holiday_balance) !== null);
+  const withAnnual = records.filter((r) => num(r.end_annual_balance) !== null);
+  const withHoliday = records.filter((r) => num(r.end_holiday_balance) !== null);
   const top = (arr, key) => arr.map((r) => ({ code: r.employee_code, name: r.arabic_name || r.name, section: r.section, value: r[key] }))
     .sort((a, b) => b.value - a.value).slice(0, 10);
-  const k = computeKPIs(ds.records, ds.asOf);
+  const k = computeKPIs(records, ds.asOf);
+  // Per-employee leave detail (balance, entitlement, weekly-rest, method, pending).
+  const employees = records.map((r) => ({
+    code: r.employee_code, name: r.arabic_name || r.name, section: r.section, position: r.position,
+    location: r.location, hiring_date: r.hiring_date,
+    annual_balance: num(r.end_annual_balance),          // remaining annual days
+    holiday_balance: num(r.end_holiday_balance),        // weekly-rest balance
+    entitlement: num(r.number_annual_leave),            // yearly entitlement
+    method: r.vacation_method || null,
+    pending: truthyFlag(r.pending_vacation_accrual),
+  })).sort((a, b) => (b.annual_balance || 0) - (a.annual_balance || 0));
+  const pendingCount = employees.filter((e) => e.pending).length;
+  const entitleVals = employees.map((e) => e.entitlement).filter((v) => v != null);
   res.json({
+    count: records.length,
     kpis: {
       annual_total: k.annual_balance_total, annual_avg: k.annual_balance_avg,
       annual_max: withAnnual.length ? Math.max(...withAnnual.map((r) => r.end_annual_balance)) : null,
       annual_min: withAnnual.length ? Math.min(...withAnnual.map((r) => r.end_annual_balance)) : null,
       holiday_total: k.holiday_balance_total, holiday_avg: k.holiday_balance_avg,
+      entitlement_avg: entitleVals.length ? entitleVals.reduce((a, b) => a + b, 0) / entitleVals.length : null,
+      pending_count: pendingCount,
     },
+    employees,
     topAnnual: top(withAnnual, 'end_annual_balance'),
     topHoliday: top(withHoliday, 'end_holiday_balance'),
-    bySection: groupBy(ds.records, 'section', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byPosition: groupBy(ds.records, 'position', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byNationality: groupBy(ds.records, 'nationality', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
-    byTenure: tenureBuckets(ds.records, ds.asOf),
+    bySection: groupBy(records, 'section', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byPosition: groupBy(records, 'position', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byNationality: groupBy(records, 'nationality', ds.asOf).map((g) => ({ key: g.key, total: g.annual_total, avg: g.annual_avg })),
+    byTenure: tenureBuckets(records, ds.asOf),
   });
 });
 
@@ -269,12 +299,22 @@ app.get('/api/alerts', requirePerm('view_expiry'), (req, res) => {
 });
 
 // Contractor compliance dashboard (per-company Iqama/Health validity + ranking).
+// Driven by the CONTRACTOR data stream (its own uploaded Excel). If no contractor
+// file has been uploaded yet, fall back to any contractor rows inside the
+// permanent dataset so nothing breaks for older single-file deployments.
 app.get('/api/contractors', requirePerm('view_expiry'), (req, res) => {
-  const ds = filtered(req); if (!ds) return res.json({ empty: true });
+  let ds = filtered(req, 'contractor');
+  let records = ds ? ds.records : null;
+  let asOf = ds ? ds.asOf : null;
+  if (!records || !records.length) {
+    const perm = filtered(req, 'permanent');
+    if (perm) { records = perm.records.filter((r) => r.is_contractor); asOf = perm.asOf; }
+  }
+  if (!records) return res.json({ empty: true });
   res.json({
-    report: buildContractorReport(ds.records, ds.asOf),
-    iqama: docStatusReport(ds.records, 'residence_expire_date', ds.asOf),
-    health: docStatusReport(ds.records, 'health_card_expire_date', ds.asOf),
+    report: buildContractorReport(records, asOf),
+    iqama: docStatusReport(records, 'residence_expire_date', asOf),
+    health: docStatusReport(records, 'health_card_expire_date', asOf),
   });
 });
 
@@ -556,31 +596,47 @@ app.post('/api/upload/:id/commit', requirePerm('approve_validation'), (req, res)
   const { records, dynamicFields } = buildRecords(p.headers, p.rows, mapping, normalizationMaps);
   const validation = validate(records, mapping);
   const kpis = computeKPIs(records, asOf);
+  // Detect the file KIND automatically: a file carrying a company/contractor
+  // column (and no leave columns) is a CONTRACTOR file; otherwise it's a
+  // PERMANENT-employee file. The admin can override via req.body.kind.
+  const kind = detectUploadKind(records, req.body.kind);
   const id = crypto.randomUUID();
-  store.saveSnapshot(id, { records, dynamicFields, validation, asOf, mapping, normalizationMaps });
+  store.saveSnapshot(id, { records, dynamicFields, validation, asOf, mapping, normalizationMaps, kind });
   const meta = store.getMeta();
   const entry = {
-    id, period, periodLabel, asOf, fileName: p.fileName, uploadedAt: p.uploadedAt,
+    id, kind, period, periodLabel, asOf, fileName: p.fileName, uploadedAt: p.uploadedAt,
     committedAt: new Date().toISOString(), uploadedBy: p.uploadedBy,
     employeeCount: records.length, saudiPct: kpis.saudi_pct, payroll: kpis.total_payroll,
     qualityScore: validation.quality.score, status: 'committed',
   };
-  // Update-not-duplicate: re-uploading a file for a period that already exists
-  // REPLACES that period's snapshot instead of creating a duplicate month.
-  const existingIdx = meta.snapshots.findIndex((s) => s.period === period);
-  if (existingIdx >= 0) {
-    const old = meta.snapshots[existingIdx];
-    if (old.id !== id) store.deleteSnapshot(old.id);
-    meta.snapshots[existingIdx] = entry;
-  } else {
-    meta.snapshots.push(entry);
-  }
-  meta.activeSnapshotId = id;
+  // Update-not-duplicate, PER KIND: re-uploading a file of the same kind for a
+  // period that already exists REPLACES that snapshot; a contractor upload never
+  // overwrites permanent data (and vice versa), and other periods are untouched.
+  const existingIdx = meta.snapshots.findIndex((s) => s.period === period && store.snapKind(s) === kind);
+  let oldId = null;
+  if (existingIdx >= 0) { oldId = meta.snapshots[existingIdx].id; meta.snapshots[existingIdx] = entry; }
+  else meta.snapshots.push(entry);
+  meta.activeByKind = meta.activeByKind || {};
+  meta.activeByKind[kind] = id;
+  if (kind === 'permanent') meta.activeSnapshotId = id; // keep legacy pointer
   store.saveMeta(meta);
+  if (oldId && oldId !== id) { try { store.deleteSnapshot(oldId); } catch (e) {} }
   delete pending[req.params.id]; store.savePending(pending);
-  store.appendAudit({ action: 'data_committed', actor: req.session.user.username, detail: `${periodLabel} — ${records.length} موظف — جودة ${validation.quality.score}%`, ip: ip(req) });
-  res.json({ ok: true, snapshotId: id, kpis, quality: validation.quality });
+  const kindLabel = kind === 'contractor' ? 'شركات' : 'دائمون';
+  store.appendAudit({ action: 'data_committed', actor: req.session.user.username, detail: `${periodLabel} — ${kindLabel} — ${records.length} موظف — جودة ${validation.quality.score}%`, ip: ip(req) });
+  res.json({ ok: true, snapshotId: id, kind, kpis, quality: validation.quality });
 });
+
+// Heuristic for which data stream an uploaded file belongs to.
+function detectUploadKind(records, override) {
+  const o = String(override || '').toLowerCase();
+  if (o === 'permanent' || o === 'contractor') return o;
+  const hasCompany = records.some((r) => r.contractor != null && String(r.contractor).trim() !== '');
+  const hasLeave = records.some((r) => (r.number_annual_leave != null)
+    || (r.vacation_method != null && String(r.vacation_method).trim() !== '')
+    || (r.end_annual_balance != null));
+  return (hasCompany && !hasLeave) ? 'contractor' : 'permanent';
+}
 
 app.delete('/api/upload/:id', requirePerm('upload_data'), (req, res) => {
   const pending = store.getPending();

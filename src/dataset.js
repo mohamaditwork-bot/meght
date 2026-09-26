@@ -3,13 +3,13 @@
 
 import { getActiveSnapshot, loadSnapshot, getMeta } from './store.js';
 
-export function resolveSnapshot(periodId) {
+export function resolveSnapshot(periodId, kind) {
   if (periodId) {
     const meta = getMeta();
     const m = meta.snapshots.find((s) => s.id === periodId);
     if (m) return { meta: m, data: loadSnapshot(periodId) };
   }
-  return getActiveSnapshot();
+  return getActiveSnapshot(kind);
 }
 
 export function applyFilters(records, q = {}) {

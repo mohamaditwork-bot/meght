@@ -85,7 +85,11 @@
  { id: 'leave', key: 'n_leave', perm: 'view_leave', ico: 'sun' },
  { id: 'salary', key: 'n_salary', perm: 'view_salary', ico: 'wallet' },
  { id: 'expiry', key: 'n_expiry', perm: 'view_expiry', ico: 'clock' },
- { id: 'contractors', key: 'n_contractors', perm: 'view_expiry', ico: 'shield' },
+ ]},
+ // Contractor companies are a fully separate section (their own data stream,
+ // no leaves — only documents & per-company compliance).
+ { gkey: 'nav_contractors', items: [
+ { id: 'contractors', key: 'n_contractors', perm: 'view_expiry', ico: 'building' },
  ]},
  { gkey: 'nav_data', items: [
  { id: 'rules', key: 'n_rules', perm: 'view_saudization', ico: 'scale', adminOnly: true },

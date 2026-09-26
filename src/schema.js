@@ -71,6 +71,26 @@ export const CORE_FIELDS = [
     aliases: ['end holiday balance', 'holiday balance', 'رصيد الهوليدي', 'رصيد العطلات', 'رصيد الاجازات'],
   },
   {
+    // Annual leave entitlement / accrual for the year (days).
+    key: 'number_annual_leave', label: 'Number of Annual Leave', labelAr: 'استحقاق الإجازة السنوية',
+    type: FIELD_TYPES.NUMBER,
+    aliases: ['number of annual leave', 'annual leave', 'annual entitlement', 'annual leave days',
+      'عدد أيام الإجازة السنوية', 'استحقاق الاجازة السنوية', 'الاجازة السنوية', 'رصيد الاستحقاق السنوي'],
+  },
+  {
+    // Leave policy / method text (e.g. "يوم 30 - 1 راحة اسبوعية").
+    key: 'vacation_method', label: 'Vacation Method Arabic Name', labelAr: 'طريقة احتساب الإجازة',
+    type: FIELD_TYPES.STRING,
+    aliases: ['vacation mehod arabic name', 'vacation method arabic name', 'vacation method',
+      'leave method', 'طريقة الاجازة', 'طريقة احتساب الاجازة', 'نظام الاجازة'],
+  },
+  {
+    // Whether there is pending (not-yet-settled) vacation accrual — yes/no.
+    key: 'pending_vacation_accrual', label: 'Pending Vacation Accrual', labelAr: 'استحقاق إجازة معلّق',
+    type: FIELD_TYPES.STRING,
+    aliases: ['pending vacation accrual', 'pending accrual', 'استحقاق معلق', 'اجازة معلقة'],
+  },
+  {
     key: 'gender', label: 'Gender Arabic Name', labelAr: 'الجنس',
     type: FIELD_TYPES.STRING,
     aliases: ['gender arabic name', 'gender', 'sex', 'الجنس', 'النوع'],
