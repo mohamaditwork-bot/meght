@@ -73,7 +73,7 @@
     const qr = qrDataURL(qrText);
 
     let coreHTML = "";
-    D.CORE_SECTIONS.forEach((sec) => {
+    D.coreSectionsFor(a.deptId).forEach((sec) => {
       const ss = window.SCORING.sectionScore(sec, a.ratings || {});
       coreHTML +=
         '<tr class="sec-row"><td colspan="4">' + esc(sec.en) + ' — <span class="ar">' + esc(sec.ar) +

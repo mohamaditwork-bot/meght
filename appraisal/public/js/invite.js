@@ -67,7 +67,7 @@
   function criteriaHTML() {
     if (!state.deptId) return `<div class="card empty">${esc(t('selectDeptToStart'))}</div>`;
     const dep = SC.getDepartment(state.deptId);
-    const coreRows = D.CORE_SECTIONS.map((sec) =>
+    const coreRows = D.coreSectionsFor(state.deptId).map((sec) =>
       `<tr class="sec-row"><td colspan="3"><b>${esc(L(sec))}</b></td></tr>` +
       sec.items.map((it) => critInput('core', it)).join('')).join('');
     const deptRows = dep.items.map((it) => critInput('dept', it)).join('');

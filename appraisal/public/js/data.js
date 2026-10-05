@@ -226,12 +226,33 @@ const SIGNATORIES = [
   { id: "hotel_manager", en: "Hotel Manager", ar: "مدير الفندق" }
 ];
 
+/* Guest-facing departments keep the guest-oriented wording on three of the core
+   criteria (quality, policies, communication); back-office departments keep the
+   neutral wording. Same criterion IDs/weights — only the displayed label
+   changes, so scores and saved records are unaffected. */
+const GUEST_FACING_DEPTS = ["front_office", "service", "bellmen", "customer_service", "housekeeping"];
+const CORE_GUEST_LABELS = {
+  quality: { en: "Quality of Work & Guest Service", ar: "جودة العمل وخدمة الضيوف" },
+  procedures: { en: "Compliance with Hotel Policies", ar: "الالتزام بسياسات وإجراءات الفندق" },
+  communication: { en: "Professional Communication & Guest Care", ar: "التواصل المهني والعناية بالضيف" }
+};
+function coreSectionsFor(deptId) {
+  if (!GUEST_FACING_DEPTS.includes(deptId)) return CORE_SECTIONS;
+  return CORE_SECTIONS.map((sec) => ({
+    ...sec,
+    items: sec.items.map((it) => {
+      const o = CORE_GUEST_LABELS[it.id];
+      return o ? { ...it, en: o.en, ar: o.ar } : it;
+    })
+  }));
+}
+
 const CORE_MAX = CORE_SECTIONS.reduce((sum, sec) => sum + sec.items.reduce((total, item) => total + item.weight, 0), 0);
 const DEPT_MAX = 40;
 const TOTAL_MAX = CORE_MAX + DEPT_MAX;
 
 window.APPRAISAL_DATA = {
-  CORE_SECTIONS, DEPARTMENTS, SEED_HOTELS, SEED_EMPLOYEES,
+  CORE_SECTIONS, coreSectionsFor, DEPARTMENTS, SEED_HOTELS, SEED_EMPLOYEES,
   PERIODS, PERFORMANCE_LEVELS, TRAINING_NEEDS,
   PROMOTION_OPTIONS, DIRECT_MANAGER_RECOMMENDATIONS, PERFORMANCE_APPROVERS, SIGNATORIES,
   CORE_MAX, DEPT_MAX, TOTAL_MAX
