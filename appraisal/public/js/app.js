@@ -391,7 +391,7 @@
     const dep = SC.getDepartment(d.deptId);
 
     let coreHTML = "";
-    D.CORE_SECTIONS.forEach((sec) => {
+    D.coreSectionsFor(d.deptId).forEach((sec) => {
       const ss = SC.sectionScore(sec, d.ratings);
       coreHTML += `<div class="eval-section">
         <div class="eval-head"><span>${esc(sec.en)} <span class="ar">${esc(sec.ar)}</span></span>

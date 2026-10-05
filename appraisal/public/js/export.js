@@ -109,7 +109,7 @@
     rows.push("<tr>" + th("Section / القسم") + th("Criterion (EN)") + th("المعيار (AR)") +
       th("Weight / الوزن") + th("Direct Score / التقدير المباشر") + th("Remarks / ملاحظات") + "</tr>");
 
-    D.CORE_SECTIONS.forEach((sec) => {
+    D.coreSectionsFor(a.deptId).forEach((sec) => {
       sec.items.forEach((it) => {
         const key = "core." + it.id;
         const hasScore = Object.prototype.hasOwnProperty.call(a.ratings || {}, key);
