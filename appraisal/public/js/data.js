@@ -1,33 +1,36 @@
 /* Maysan International Group — performance appraisal master data
    Scoring model: Core Evaluation 70 + Department Evaluation 40 = 110 points. */
-/* ---- Core evaluation: 8 essential criteria, total = 70 ---- */
+/* ---- Core evaluation: 8 UNIVERSAL criteria (apply to every employee in any
+   department — no guest/visitor wording, so back-office roles such as Accounting
+   or IT are judged fairly), total = 70. Role-specific skills live in the
+   per-department section below. ---- */
 const CORE_SECTIONS = [
   {
-    id: "service_quality", en: "Service Quality & Results", ar: "جودة الخدمة والنتائج",
+    id: "service_quality", en: "Work Quality & Results", ar: "جودة العمل والنتائج",
     items: [
-      { id: "quality", en: "Quality of Work & Guest Service", ar: "جودة العمل وخدمة الضيوف", weight: 10 },
-      { id: "productivity", en: "Productivity & Timely Completion", ar: "إنجاز المهام في الوقت المحدد", weight: 10 }
+      { id: "quality", en: "Quality, Accuracy & Mastery of Work", ar: "إتقان العمل وجودته ودقته", weight: 10 },
+      { id: "productivity", en: "Productivity & Meeting Deadlines", ar: "الإنتاجية وإنجاز المهام في الوقت المحدد", weight: 10 }
     ]
   },
   {
     id: "reliability_discipline", en: "Reliability & Discipline", ar: "الموثوقية والانضباط",
     items: [
       { id: "attendance", en: "Attendance, Punctuality & Responsibility", ar: "الحضور والانضباط وتحمل المسؤولية", weight: 10 },
-      { id: "procedures", en: "Compliance with Hotel Policies", ar: "الالتزام بسياسات وإجراءات الفندق", weight: 10 }
+      { id: "procedures", en: "Compliance with Policies & Work Ethics", ar: "الالتزام بالسياسات والإجراءات وأخلاقيات العمل", weight: 10 }
     ]
   },
   {
     id: "teamwork_communication", en: "Teamwork & Communication", ar: "العمل الجماعي والتواصل",
     items: [
       { id: "teamwork", en: "Teamwork & Cross-Department Cooperation", ar: "العمل الجماعي والتعاون بين الأقسام", weight: 8 },
-      { id: "communication", en: "Professional Communication & Guest Care", ar: "التواصل المهني والعناية بالضيف", weight: 7 }
+      { id: "communication", en: "Effective Professional Communication", ar: "التواصل المهني الفعّال", weight: 7 }
     ]
   },
   {
     id: "safety_improvement", en: "Safety & Improvement", ar: "السلامة والتحسين",
     items: [
       { id: "safety", en: "Safety, Hygiene & Security Awareness", ar: "الوعي بالسلامة والنظافة والأمن", weight: 8 },
-      { id: "initiative", en: "Problem Solving & Continuous Improvement", ar: "حل المشكلات والتحسين المستمر", weight: 7 }
+      { id: "initiative", en: "Initiative, Problem Solving & Continuous Improvement", ar: "المبادرة وحل المشكلات والتحسين المستمر", weight: 7 }
     ]
   }
 ];
@@ -135,6 +138,27 @@ const DEPARTMENTS = [
     ["followup", "Follow-up & Closure", "المتابعة وإغلاق الطلبات"],
     ["knowledge", "Hotel Knowledge", "الإلمام بخدمات الفندق"],
     ["satisfaction", "Guest Satisfaction", "رضا الضيوف"]
+  ]),
+  dept("maintenance", "Maintenance & Engineering", "الصيانة والهندسة", [
+    ["preventive", "Preventive Maintenance Plan", "تنفيذ خطة الصيانة الوقائية"],
+    ["repairs", "Repair Quality & Durability", "جودة الإصلاحات ومتانتها"],
+    ["response", "Response Time to Work Orders", "سرعة الاستجابة لأوامر العمل"],
+    ["energy", "Energy & Utilities Efficiency", "كفاءة الطاقة والمرافق"],
+    ["safety", "Technical & Electrical Safety", "السلامة الفنية والكهربائية"]
+  ]),
+  dept("sales_marketing", "Sales & Marketing", "المبيعات والتسويق", [
+    ["targets", "Achievement of Sales Targets", "تحقيق مستهدفات المبيعات"],
+    ["accounts", "Account & Client Management", "إدارة الحسابات والعملاء"],
+    ["digital", "Digital Marketing & Channels", "التسويق الرقمي وقنوات الحجز"],
+    ["proposals", "Quotations & Contracts Accuracy", "دقة العروض والعقود"],
+    ["reporting", "Market Analysis & Reporting", "تحليل السوق وإعداد التقارير"]
+  ]),
+  dept("public_relations", "Public Relations", "العلاقات العامة", [
+    ["reputation", "Reputation & Brand Management", "إدارة السمعة والعلامة"],
+    ["media", "Media & Social Communication", "التواصل الإعلامي والاجتماعي"],
+    ["partnerships", "Partnerships & Community Relations", "الشراكات والعلاقات المجتمعية"],
+    ["content", "Content & Event Coverage", "المحتوى وتغطية الفعاليات"],
+    ["response", "Timely Response & Coordination", "سرعة الاستجابة والتنسيق"]
   ])
 ];
 
@@ -144,6 +168,7 @@ const SEED_HOTELS = [
   { id: "grand_plaza_badr_al_maqam", en: "Grand Plaza Badr Al Maqam Hotel", ar: "فندق جراند بلازا بدر المقام" },
   { id: "grand_plaza_madinah", en: "Grand Plaza Al Madinah Hotel", ar: "فندق جراند بلازا المدينة المنورة" },
   { id: "maysan_rihab_al_misk", en: "Maysan Rihab Al Misk Hotel", ar: "فندق ميسان رحاب المسك" },
+  { id: "maysan_rotana_al_misk", en: "Maysan Rotana Al Misk Hotel", ar: "فندق ميسان روتانا المسك" },
   { id: "maysan_al_taqwa", en: "Maysan Al Taqwa Hotel", ar: "فندق ميسان التقوى" },
   { id: "plaza_inn_ohud", en: "Plaza Inn Ohud Hotel", ar: "فندق بلازا إن أحد" }
 ];
