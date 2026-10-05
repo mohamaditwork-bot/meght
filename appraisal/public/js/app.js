@@ -656,6 +656,8 @@
           <div class="field"><label>${esc(t("period"))}</label>
             <select id="lk-period"><option value="">${esc(t("choosePeriod"))}</option>
               ${D.PERIODS.map((p) => `<option value="${p.id}">${esc(L(p))}</option>`).join("")}</select></div>
+          <div class="field"><label>${esc(t("evalFrom"))}</label><input type="date" id="lk-from"></div>
+          <div class="field"><label>${esc(t("evalTo"))}</label><input type="date" id="lk-to"></div>
           <div class="field"><label>${esc(t("note"))}</label><input id="lk-note" placeholder="${esc(t("optional"))}"></div>
         </div>
         <label class="check-line" id="lk-openrow" style="display:none;margin:4px 0 10px">
@@ -692,6 +694,8 @@
         jobTitle: $("#lk-job").value.trim() || null,
         managerName: $("#lk-mgr").value.trim() || null,
         periodId: $("#lk-period").value || null,
+        evalDateFrom: $("#lk-from").value || null,
+        evalDateTo: $("#lk-to").value || null,
         note: $("#lk-note").value.trim() || null,
         reusable: $("#lk-reusable").checked,
       };

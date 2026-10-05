@@ -242,6 +242,8 @@ app.post('/api/invites', requireAuth(wrap(async (req, res) => {
     jobTitle: b.jobTitle || null,
     managerName: b.managerName || null,
     periodId: b.periodId || null,
+    evalDateFrom: b.evalDateFrom || null,
+    evalDateTo: b.evalDateTo || null,
     note: b.note || null,
     resultId: null,
     reusable: b.reusable === true,   // multi-use link: accepts more than one evaluation
@@ -281,6 +283,8 @@ function publicInviteView(invite) {
     jobTitle: invite.jobTitle,
     managerName: invite.managerName,
     periodId: invite.periodId,
+    evalDateFrom: invite.evalDateFrom || null,
+    evalDateTo: invite.evalDateTo || null,
     note: invite.note,
     reusable: !!invite.reusable,
     submitCount: invite.submitCount || 0,

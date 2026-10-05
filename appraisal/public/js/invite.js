@@ -156,8 +156,8 @@
           ${locked('employeeNo') ? roText(t('fileNo'), inv.employeeNo) : editText('iv-fileno', t('fileNo'), '')}
           ${locked('jobTitle') ? roText(t('jobTitle'), inv.jobTitle) : editText('iv-job', t('jobTitle'), '')}
           ${editText('iv-mgr', t('yourName'), inv.managerName || '')}
-          <div class="field"><label>${esc(t('evalFrom') || 'From')}</label><input type="date" id="iv-from"></div>
-          <div class="field"><label>${esc(t('evalTo') || 'To')}</label><input type="date" id="iv-to"></div>
+          <div class="field"><label>${esc(t('evalFrom') || 'From')}</label><input type="date" id="iv-from" value="${esc(inv.evalDateFrom || '')}"></div>
+          <div class="field"><label>${esc(t('evalTo') || 'To')}</label><input type="date" id="iv-to" value="${esc(inv.evalDateTo || '')}"></div>
         </div>
       </div>
       <div id="crit-area">${criteriaHTML()}</div>
