@@ -117,7 +117,12 @@ function activeRecords(req, kind) {
 function filtered(req, kind) {
   const ds = activeRecords(req, kind);
   if (!ds) return null;
-  return { ...ds, records: applyFilters(ds.records, req.query) };
+  let records = applyFilters(ds.records, req.query);
+  // General/permanent dashboards show DIRECT (permanent) employees only —
+  // contractor/company staff live in their own section. In separate-upload mode
+  // the permanent snapshot has no contractor rows, so this is a no-op there.
+  if (kind !== 'contractor') records = records.filter((r) => !r.is_contractor);
+  return { ...ds, records };
 }
 
 // ---- State ---------------------------------------------------------------
@@ -308,8 +313,10 @@ app.get('/api/contractors', requirePerm('view_expiry'), (req, res) => {
   let records = ds ? ds.records : null;
   let asOf = ds ? ds.asOf : null;
   if (!records || !records.length) {
-    const perm = filtered(req, 'permanent');
-    if (perm) { records = perm.records.filter((r) => r.is_contractor); asOf = perm.asOf; }
+    // Single mixed file: take the contractor rows out of the permanent snapshot
+    // (raw records, before the direct-employee filter is applied).
+    const snap = activeRecords(req, 'permanent');
+    if (snap) { records = applyFilters(snap.records, req.query).filter((r) => r.is_contractor); asOf = snap.asOf; }
   }
   if (!records) return res.json({ empty: true });
   res.json({
@@ -632,11 +639,16 @@ app.post('/api/upload/:id/commit', requirePerm('approve_validation'), (req, res)
 function detectUploadKind(records, override) {
   const o = String(override || '').toLowerCase();
   if (o === 'permanent' || o === 'contractor') return o;
-  const hasCompany = records.some((r) => r.contractor != null && String(r.contractor).trim() !== '');
   const hasLeave = records.some((r) => (r.number_annual_leave != null)
     || (r.vacation_method != null && String(r.vacation_method).trim() !== '')
     || (r.end_annual_balance != null));
-  return (hasCompany && !hasLeave) ? 'contractor' : 'permanent';
+  const permanentRows = records.filter((r) => !r.is_contractor).length;
+  const contractorRows = records.filter((r) => r.is_contractor).length;
+  // A dedicated contractor file = essentially all rows are contractors with no
+  // leave columns. A file that still contains direct employees is the permanent
+  // (main) file — even if some of its rows are split out as contractor staff.
+  if (contractorRows > 0 && permanentRows === 0 && !hasLeave) return 'contractor';
+  return 'permanent';
 }
 
 app.delete('/api/upload/:id', requirePerm('upload_data'), (req, res) => {

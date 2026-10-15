@@ -1,14 +1,14 @@
 {
   "snapshots": [
     {
-      "id": "6a7a3632-d719-4d24-bfcc-0679e4dc66b2",
+      "id": "939143ec-72be-42bc-8d76-795d22c33c2b",
       "kind": "permanent",
       "period": "2026-10",
       "periodLabel": "أكتوبر 2026",
       "asOf": "2026-10-13",
       "fileName": "HR_Current.xlsx",
-      "uploadedAt": "2026-10-15T08:11:53.142Z",
-      "committedAt": "2026-10-15T08:11:53.142Z",
+      "uploadedAt": "2026-10-15T09:52:15.991Z",
+      "committedAt": "2026-10-15T09:52:15.991Z",
       "uploadedBy": "admin",
       "employeeCount": 96,
       "saudiPct": 39.58333333333333,
@@ -17,8 +17,8 @@
       "status": "committed"
     }
   ],
-  "activeSnapshotId": "6a7a3632-d719-4d24-bfcc-0679e4dc66b2",
+  "activeSnapshotId": "939143ec-72be-42bc-8d76-795d22c33c2b",
   "activeByKind": {
-    "permanent": "6a7a3632-d719-4d24-bfcc-0679e4dc66b2"
+    "permanent": "939143ec-72be-42bc-8d76-795d22c33c2b"
   }
 }
