@@ -319,10 +319,21 @@ app.get('/api/contractors', requirePerm('view_expiry'), (req, res) => {
     if (snap) { records = applyFilters(snap.records, req.query).filter((r) => r.is_contractor); asOf = snap.asOf; }
   }
   if (!records) return res.json({ empty: true });
+  // Per-employee document expiry for contractor staff (same fields the permanent
+  // employees show): Iqama / health card / passport / contract / probation.
+  const employees = records.map((r) => ({
+    code: r.employee_code, name: r.arabic_name || r.name, company: r.contractor || '—',
+    position: r.position, nationality: r.nationality, is_saudi: r.is_saudi,
+    docs: EXPIRY_FIELDS.map((f) => ({
+      key: f.key, label: f.label,
+      date: r[f.key] || null, days: daysUntil(r[f.key], asOf), status: docStatus(r, f.key, asOf),
+    })),
+  })).sort((a, b) => String(a.company).localeCompare(String(b.company), 'ar'));
   res.json({
     report: buildContractorReport(records, asOf),
     iqama: docStatusReport(records, 'residence_expire_date', asOf),
     health: docStatusReport(records, 'health_card_expire_date', asOf),
+    employees, fields: EXPIRY_FIELDS,
   });
 });
 

@@ -562,6 +562,19 @@
       <div class="panel"><div class="panel-head"><h3>${ar ? 'حالة الشهادات الصحية' : 'Contractor Health-card status'}</h3><span class="p-sub">${ar ? 'مهن التغذية فقط' : 'food roles only'}</span></div><div class="panel-body">${statusStrip(ov.health, ['expired', 'near', 'valid', 'missing', 'na'])}${topExpired('health')}</div></div>
     </div>`;
     const rows = (rep.companies || []);
+    // Per-employee document expiry (Iqama / health / passport / contract / probation).
+    const emps = r.employees || [];
+    const fields = r.fields || [];
+    const toneCls = (tn) => 'b-' + (tn || 'muted');
+    const docCell = (d) => `<div style="white-space:nowrap">${d.date ? fmt.date(d.date) : '—'}</div>`
+      + `<span class="badge ${toneCls(d.status && d.status.tone)}" style="margin-top:3px">${esc((d.status && d.status.label) || '—')}</span>`;
+    const empRows = (list) => list.map((e) => `<tr>`
+      + `<td data-l="${esc(ar ? 'الموظف' : 'Employee')}"><b>${esc(e.name || '')}</b><span class="sub-cell">${esc(e.code || '')}</span></td>`
+      + `<td data-l="${esc(L.company)}"><span class="badge b-teal">${esc(e.company || '—')}</span></td>`
+      + e.docs.map((d) => `<td data-l="${esc(d.label)}" class="num">${docCell(d)}</td>`).join('')
+      + `</tr>`).join('');
+    const empPanelLbl = ar ? 'انتهاء وثائق موظفي الشركات' : 'Contractor document expiry (per employee)';
+    const searchPh = ar ? 'ابحث بالاسم أو الرقم أو الشركة…' : 'Search by name / ID / company…';
     content.innerHTML = `<div class="page-head"><div><h2>${L.title}</h2><div class="sub">${L.sub}</div></div>
       <div class="ph-actions no-print"><button class="btn" id="cReport">${window.icon ? window.icon('printer') : ''} ${t('preview_print')}</button></div></div>
       <div class="kpi-grid">
@@ -589,7 +602,12 @@
           <td class="num">${fmt.n(c.health.valid + c.health.near)} / ${fmt.n(c.health.applicable)}</td>
           <td class="num">${c.violations ? `<span class="badge b-danger">${fmt.n(c.violations)}</span>` : '<span class="badge b-ok">0</span>'}</td>
           <td class="num">${complChip(c.compliance_pct)}</td></tr>`).join('')}
-        </tbody></table></div></div>`;
+        </tbody></table></div></div>
+      <div class="panel" style="margin-top:16px"><div class="panel-head"><h3>${esc(empPanelLbl)}</h3>
+        <input id="conEmpSearch" class="mini-search" placeholder="${esc(searchPh)}" autocomplete="off"></div>
+        <div class="panel-body tbl-wrap">
+        <table class="tbl responsive-cards"><thead><tr><th>${ar ? 'الموظف' : 'Employee'}</th><th>${L.company}</th>${fields.map((f) => `<th>${esc(f.label)}</th>`).join('')}</tr></thead>
+        <tbody id="conEmpBody">${empRows(emps)}</tbody></table></div></div>`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (!window.Chart) return;
       const cats = rows.map((c) => c.company);
@@ -601,6 +619,12 @@
     }));
     const rb = document.getElementById('cReport');
     if (rb) rb.addEventListener('click', () => window.Report.open('contractors', { lang: window.I18N.lang, orient: 'landscape', division: window.App.filters.division || '' }));
+    const conSearch = document.getElementById('conEmpSearch'), conBody = document.getElementById('conEmpBody');
+    if (conSearch && conBody) conSearch.addEventListener('input', () => {
+      const q = conSearch.value.trim().toLowerCase();
+      const list = !q ? emps : emps.filter((e) => (String(e.name || '') + ' ' + String(e.code || '') + ' ' + String(e.company || '')).toLowerCase().includes(q));
+      conBody.innerHTML = empRows(list);
+    });
   };
 
   // ---- Job Mapping admin page --------------------------------------------
