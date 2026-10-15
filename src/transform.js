@@ -58,8 +58,22 @@ export function buildRecords(headers, rows, mapping, normalizationMaps = {}) {
     }
     // Derived
     rec.is_saudi = isSaudiNationality(rec.nationality);
-    // Contractor: an employee with a company/location value belongs to an
-    // external contracted company; empty = a direct/permanent employee.
+    // Location may encode "City - Company" (e.g. "المدينة - الحربي"): a bare city
+    // ("المدينة" / "المدينة المنورة") is a DIRECT/permanent employee, while a
+    // company written after the dash means the employee belongs to that
+    // contracted company. Split the city into `location` and the company into
+    // `contractor` so contractor staff can be tracked separately.
+    if (!rec.contractor && rec.location != null && String(rec.location).trim()) {
+      const parts = String(rec.location).split(/\s*[-–—]\s*/);
+      if (parts.length > 1) {
+        const city = (parts[0] || '').trim();
+        const company = parts.slice(1).join(' - ').trim();
+        if (city) rec.location = city;
+        if (company) rec.contractor = company;
+      }
+    }
+    // Contractor: an employee with a company value belongs to an external
+    // contracted company; empty = a direct/permanent employee.
     const comp = rec.contractor == null ? '' : String(rec.contractor).trim();
     rec.contractor = comp || null;
     rec.is_contractor = !!comp;
