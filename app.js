@@ -500,7 +500,7 @@ app.post('/api/uploads/:id/activate', requirePerm('view_dashboard'), (req, res) 
   if (store.setActiveSnapshot(req.params.id)) { store.appendAudit({ action: 'snapshot_activated', actor: req.session.user.username, detail: req.params.id }); return res.json({ ok: true }); }
   res.status(404).json({ error: 'not_found' });
 });
-app.delete('/api/uploads/:id', requirePerm('manage_users'), (req, res) => {
+app.delete('/api/uploads/:id', requirePerm('delete_data'), (req, res) => {
   store.deleteSnapshot(req.params.id);
   store.appendAudit({ action: 'snapshot_deleted', actor: req.session.user.username, detail: req.params.id });
   res.json({ ok: true });
@@ -524,7 +524,7 @@ app.put('/api/rules/:id', requirePerm('manage_localization_rules'), (req, res) =
   store.appendAudit({ action: 'rule_updated', actor: req.session.user.username, detail: rules[i].name || rules[i].id });
   res.json({ rule: rules[i] });
 });
-app.delete('/api/rules/:id', requirePerm('manage_localization_rules'), (req, res) => {
+app.delete('/api/rules/:id', requirePerm('delete_data'), (req, res) => {
   let rules = store.getRules();
   rules = rules.filter((r) => r.id !== req.params.id);
   store.saveRules(rules);

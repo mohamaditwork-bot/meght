@@ -547,7 +547,7 @@
  ${r.conditions ? `<div style="margin-top:8px;font-size:12.5px"><b>الشروط:</b> ${fmt.esc(r.conditions)}</div>` : ''}
  ${r.exceptions ? `<div style="margin-top:4px;font-size:12.5px"><b>الاستثناءات:</b> ${fmt.esc(r.exceptions)}</div>` : ''}
  <div style="margin-top:10px;font-size:12px;color:var(--muted)">المصدر: ${fmt.esc(r.source || '—')} ${r.source_url ? `· <a href="${fmt.esc(r.source_url)}" target="_blank" rel="noopener" style="color:var(--teal-700);font-weight:700">رابط المصدر ↗</a>` : ''}</div>
- ${can('manage_localization_rules') ? `<div class="no-print" style="margin-top:12px;display:flex;gap:8px"><button class="btn" data-edit-rule="${r.id}">تعديل</button><button class="btn" style="color:var(--danger)" data-del-rule="${r.id}">حذف</button></div>` : ''}
+ ${(can('manage_localization_rules') || can('delete_data')) ? `<div class="no-print" style="margin-top:12px;display:flex;gap:8px">${can('manage_localization_rules') ? `<button class="btn" data-edit-rule="${r.id}">تعديل</button>` : ''}${can('delete_data') ? `<button class="btn" style="color:var(--danger)" data-del-rule="${r.id}">حذف</button>` : ''}</div>` : ''}
  </div></div>`;
  }
  function openRuleForm(rule) {

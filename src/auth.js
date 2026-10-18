@@ -11,6 +11,10 @@ export const PERMISSIONS = [
   'view_movements', 'view_comparison', 'view_salary', 'upload_data', 'manage_mapping',
   'approve_validation', 'manage_movements', 'manage_leavers', 'manage_localization_rules',
   'view_insights', 'view_reports', 'export_reports', 'view_audit', 'manage_users',
+  // Destructive deletion of committed data (periods/snapshots) and localization
+  // rules is a SEPARATE capability so an account can be granted "everything
+  // except delete". Only the top admin holds it.
+  'delete_data',
 ];
 
 export const ROLES = {
@@ -29,7 +33,15 @@ export const ROLES = {
   },
   hr_manager: {
     label: 'HR Manager — مدير الموارد البشرية',
-    permissions: PERMISSIONS.filter((p) => p !== 'manage_users'),
+    permissions: PERMISSIONS.filter((p) => p !== 'manage_users' && p !== 'delete_data'),
+  },
+  // Full HR operator: every feature of the platform (dashboards, upload,
+  // mapping, validation, movements, leavers, rules, users, audit, reports,
+  // export…) EXCEPT the ability to delete committed data or rules — صلاحيات
+  // كاملة عدا الحذف.
+  hr_all: {
+    label: 'موارد بشرية — كل الصلاحيات عدا الحذف',
+    permissions: PERMISSIONS.filter((p) => p !== 'delete_data'),
   },
   hr_officer: {
     label: 'HR Officer — أخصائي موارد بشرية',
@@ -84,6 +96,8 @@ const RETIRED_ADMIN_PASSCODES = ['056023'];
 const LEADERSHIP = [
   { id: 'gm_nawaf', username: 'nawaf.gm', name: 'نواف غبان', role: 'executive', passcode: process.env.GM_PASSCODE || '0507575747' },
   { id: 'hrm_majed', username: 'majed.hr', name: 'ماجد', role: 'executive', passcode: process.env.HRM_PASSCODE || '05959222959' },
+  // أمل — موارد بشرية: كل الصلاحيات عدا الحذف.
+  { id: 'hr_amal', username: 'amal.hr', name: 'أمل', role: 'hr_all', passcode: process.env.AMAL_PASSCODE || '0597946483' },
 ];
 
 function makeUser(u) {
